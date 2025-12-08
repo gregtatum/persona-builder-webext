@@ -4,9 +4,9 @@
   "description": "Build a Firefox Persona with browser history, and snapshots of HTML.",
   "main": "background.js",
   "scripts": {
-    "start": "web-ext run --config ./.web-ext-config.js",
-    "lint": "web-ext lint --config ./.web-ext-config.js",
-    "build": "web-ext build --overwrite-dest --config ./.web-ext-config.js"
+    "start": "web-ext run --browser-console --keep-profile-changes --config ./.web-ext-config.cjs",
+    "lint": "web-ext lint --config ./.web-ext-config.cjs",
+    "build": "web-ext build --overwrite-dest --config ./.web-ext-config.cjs"
   },
   "keywords": [],
   "author": "",

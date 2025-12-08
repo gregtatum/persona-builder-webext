@@ -12,7 +12,7 @@ Build a Firefox Persona with browser history, and snapshots of HTML.
 - `background.js`: Background script entry.
 - `content.js`: Content script injected into pages.
 - `popup.html` / `popup.js`: Popup UI with persona dropdown, add persona prompt, and capture button (logs actions).
-- `.web-ext-config.js`: Shared config for `web-ext` commands.
+- `.web-ext-config.cjs`: Shared config for `web-ext` commands.
 
 ### Load as a temporary add-on
 1. `npm start` (or go to `about:debugging#/runtime/this-firefox` and load `manifest.json`).
