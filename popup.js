@@ -5,7 +5,10 @@ const personas = [
 ];
 
 const personaSelect = document.getElementById("persona-select");
+const personaForm = document.getElementById("persona-form");
+const personaNameInput = document.getElementById("persona-name");
 const addPersonaBtn = document.getElementById("add-persona");
+const savePersonaBtn = document.getElementById("save-persona");
 const captureBtn = document.getElementById("capture");
 const statusEl = document.getElementById("status");
 
@@ -24,16 +27,17 @@ function setStatus(text) {
 }
 
 function addPersonaFlow() {
-  const name = prompt("Enter a name for the new persona:");
+  const name = (personaNameInput.value || "").trim();
   if (!name) {
-    setStatus("Add persona cancelled");
-    console.log("Persona add cancelled");
+    console.log("Persona add cancelled: no name provided");
     return;
   }
   const id = `p-${Date.now()}`;
   personas.push({ id, name });
   renderPersonas();
   personaSelect.value = id;
+  personaNameInput.value = "";
+  personaForm.classList.add("hidden");
   setStatus(`Added persona "${name}"`);
   console.log("Persona added", { id, name });
 }
@@ -50,7 +54,22 @@ function captureCurrentPersona() {
   console.log("Capture page for persona", persona);
 }
 
-addPersonaBtn.addEventListener("click", addPersonaFlow);
+function togglePersonaForm() {
+  const isHidden = personaForm.classList.contains("hidden");
+  personaForm.classList.toggle("hidden");
+  if (isHidden) {
+    personaNameInput.focus();
+  }
+}
+
+addPersonaBtn.addEventListener("click", togglePersonaForm);
+savePersonaBtn.addEventListener("click", addPersonaFlow);
+personaNameInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addPersonaFlow();
+  }
+});
 captureBtn.addEventListener("click", captureCurrentPersona);
 personaSelect.addEventListener("change", () => {
   const persona = personas.find((p) => p.id === personaSelect.value);
