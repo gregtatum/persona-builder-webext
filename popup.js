@@ -1,15 +1,31 @@
+// @ts-check
+
 // Stub UI state: in-memory personas.
 const personas = [
   { id: "p1", name: "Default Persona" },
-  { id: "p2", name: "Research Persona" }
+  { id: "p2", name: "Research Persona" },
 ];
 
-const personaSelect = document.getElementById("persona-select");
-const personaForm = document.getElementById("persona-form");
-const personaNameInput = document.getElementById("persona-name");
-const addPersonaBtn = document.getElementById("add-persona");
-const savePersonaBtn = document.getElementById("save-persona");
-const captureBtn = document.getElementById("capture");
+/**
+ * @template {HTMLElement} T
+ * @param {string} id
+ * @param {new (...args: any[]) => T} ctor
+ * @returns {T}
+ */
+function getElement(id, ctor) {
+  const el = document.getElementById(id);
+  if (!(el instanceof ctor)) {
+    throw new Error(`Expected ${id} to be a ${ctor.name}`);
+  }
+  return el;
+}
+
+const personaSelect = getElement("persona-select", HTMLSelectElement);
+const personaForm = getElement("persona-form", HTMLDivElement);
+const personaNameInput = getElement("persona-name", HTMLInputElement);
+const addPersonaBtn = getElement("add-persona", HTMLButtonElement);
+const savePersonaBtn = getElement("save-persona", HTMLButtonElement);
+const captureBtn = getElement("capture", HTMLButtonElement);
 
 function renderPersonas() {
   personaSelect.innerHTML = "";

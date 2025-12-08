@@ -5,6 +5,7 @@
   "main": "background.js",
   "scripts": {
     "start": "./bin/run-web-ext.sh",
+    "ts": "tsc --noEmit",
     "lint": "web-ext lint --config ./.web-ext-config.mjs",
     "build": "web-ext build --overwrite-dest --config ./.web-ext-config.mjs"
   },
@@ -12,6 +13,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/firefox-webext-browser": "^143.0.0",
+    "typescript": "^5.9.3",
     "web-ext": "^9.2.0"
   }
 }
