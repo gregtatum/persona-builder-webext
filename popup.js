@@ -10,7 +10,6 @@ const personaNameInput = document.getElementById("persona-name");
 const addPersonaBtn = document.getElementById("add-persona");
 const savePersonaBtn = document.getElementById("save-persona");
 const captureBtn = document.getElementById("capture");
-const statusEl = document.getElementById("status");
 
 function renderPersonas() {
   personaSelect.innerHTML = "";
@@ -20,10 +19,6 @@ function renderPersonas() {
     opt.textContent = p.name;
     personaSelect.appendChild(opt);
   });
-}
-
-function setStatus(text) {
-  statusEl.textContent = text || "";
 }
 
 function addPersonaFlow() {
@@ -38,7 +33,6 @@ function addPersonaFlow() {
   personaSelect.value = id;
   personaNameInput.value = "";
   personaForm.classList.add("hidden");
-  setStatus(`Added persona "${name}"`);
   console.log("Persona added", { id, name });
 }
 
@@ -46,11 +40,9 @@ function captureCurrentPersona() {
   const selectedId = personaSelect.value;
   const persona = personas.find((p) => p.id === selectedId);
   if (!persona) {
-    setStatus("No persona selected");
     console.log("Capture skipped: no persona selected");
     return;
   }
-  setStatus(`Capture requested for "${persona.name}"`);
   console.log("Capture page for persona", persona);
 }
 
@@ -74,8 +66,6 @@ captureBtn.addEventListener("click", captureCurrentPersona);
 personaSelect.addEventListener("change", () => {
   const persona = personas.find((p) => p.id === personaSelect.value);
   console.log("Persona switched", persona);
-  setStatus(persona ? `Selected "${persona.name}"` : "No persona selected");
 });
 
 renderPersonas();
-setStatus("Stub UI ready");
