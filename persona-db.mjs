@@ -1,10 +1,7 @@
 // @ts-check
-/// <reference path="./types.d.ts" />
-
-/** @typedef {import("./types").PersonaRecord} PersonaRecord */
-/** @typedef {import("./types").HistoryRecord} HistoryRecord */
-/** @typedef {import("./types").PageSnapshotRecord} PageSnapshotRecord */
-/** @typedef {import("./types").InsightRecord} InsightRecord */
+/**
+ * @import {PersonaRecord, HistoryRecord, PageSnapshotRecord, InsightRecord} from "./types"
+ */
 
 const DB_NAME = "personaBuilder";
 const DB_VERSION = 1;

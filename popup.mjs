@@ -1,7 +1,7 @@
 // @ts-check
-/// <reference path="./types.d.ts" />
-
-/** @typedef {import("./types").PersonaRecord} PersonaRecord */
+/**
+ * @import {PersonaRecord} from "./types"
+ */
 
 import { addPersona, listPersonas } from "./persona-db.mjs";
 
