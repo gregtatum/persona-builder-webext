@@ -1,33 +1,10 @@
 // @ts-check
+/// <reference path="./types.d.ts" />
 
-/**
- * @typedef {Object} PersonaRecord
- * @property {string} id
- * @property {string} name
- * @property {string} createdAt
- *
- * @typedef {Object} HistoryRecord
- * @property {string} id
- * @property {string} personaId
- * @property {string} url
- * @property {string} title
- * @property {string} description
- * @property {string} visitedAt
- *
- * @typedef {Object} PageSnapshotRecord
- * @property {string} historyId
- * @property {string} personaId
- * @property {string} url
- * @property {string} capturedAt
- * @property {string} html
- *
- * @typedef {Object} InsightRecord
- * @property {string} id
- * @property {string} personaId
- * @property {string} kind
- * @property {any} content
- * @property {string} createdAt
- */
+/** @typedef {import("./types").PersonaRecord} PersonaRecord */
+/** @typedef {import("./types").HistoryRecord} HistoryRecord */
+/** @typedef {import("./types").PageSnapshotRecord} PageSnapshotRecord */
+/** @typedef {import("./types").InsightRecord} InsightRecord */
 
 const DB_NAME = "personaBuilder";
 const DB_VERSION = 1;
@@ -48,7 +25,7 @@ function makeId() {
  * Open (and upgrade) the IndexedDB database.
  * @returns {Promise<IDBDatabase>}
  */
-function openDb() {
+export function openDb() {
   if (db) {
     return Promise.resolve(db);
   }
@@ -120,19 +97,6 @@ function put(source, value) {
 }
 
 /**
- * @param {IDBObjectStore} source
- * @param {IDBValidKey | IDBKeyRange} key
- * @returns {Promise<void>}
- */
-function remove(source, key) {
-  return new Promise((resolve, reject) => {
-    const request = source.delete(key);
-    request.onerror = () => reject(request.error || new Error("delete failed"));
-    request.onsuccess = () => resolve();
-  });
-}
-
-/**
  * @param {"readonly" | "readwrite"} mode
  * @param {string[]} storeNames
  * @returns {Promise<IDBTransaction>}
@@ -146,7 +110,7 @@ async function transaction(mode, storeNames) {
  * @param {string} name
  * @returns {Promise<PersonaRecord>}
  */
-async function addPersona(name) {
+export async function addPersona(name) {
   const tx = await transaction("readwrite", ["personas"]);
   /** @type {PersonaRecord} */
   const persona = {
@@ -162,7 +126,7 @@ async function addPersona(name) {
 /**
  * @returns {Promise<PersonaRecord[]>}
  */
-async function listPersonas() {
+export async function listPersonas() {
   const tx = await transaction("readonly", ["personas"]);
   const all = await getAll(/** @type {IDBObjectStore} */ (tx.objectStore("personas")));
   tx.commit?.();
@@ -174,7 +138,7 @@ async function listPersonas() {
  * @param {Omit<HistoryRecord, "personaId">} history
  * @returns {Promise<HistoryRecord>}
  */
-async function addHistoryEntry(personaId, history) {
+export async function addHistoryEntry(personaId, history) {
   const tx = await transaction("readwrite", ["history"]);
   const record = {
     ...history,
@@ -190,7 +154,7 @@ async function addHistoryEntry(personaId, history) {
  * @param {PageSnapshotRecord} snapshot
  * @returns {Promise<void>}
  */
-async function addPageSnapshot(snapshot) {
+export async function addPageSnapshot(snapshot) {
   const tx = await transaction("readwrite", ["pageSnapshots"]);
   await put(tx.objectStore("pageSnapshots"), snapshot);
   tx.commit?.();
@@ -201,7 +165,7 @@ async function addPageSnapshot(snapshot) {
  * @param {Omit<InsightRecord, "personaId">} insight
  * @returns {Promise<InsightRecord>}
  */
-async function addInsight(personaId, insight) {
+export async function addInsight(personaId, insight) {
   const tx = await transaction("readwrite", ["insights"]);
   const record = {
     ...insight,
@@ -212,114 +176,3 @@ async function addInsight(personaId, insight) {
   tx.commit?.();
   return record;
 }
-
-/**
- * @template {HTMLElement} T
- * @param {string} id
- * @param {new (...args: any[]) => T} ctor
- * @returns {T}
- */
-function getElement(id, ctor) {
-  const el = document.getElementById(id);
-  if (!(el instanceof ctor)) {
-    throw new Error(`Expected ${id} to be a ${ctor.name}`);
-  }
-  return el;
-}
-
-const personaSelect = getElement("persona-select", HTMLSelectElement);
-const personaForm = getElement("persona-form", HTMLDivElement);
-const personaNameInput = getElement("persona-name", HTMLInputElement);
-const addPersonaBtn = getElement("add-persona", HTMLButtonElement);
-const savePersonaBtn = getElement("save-persona", HTMLButtonElement);
-const captureBtn = getElement("capture", HTMLButtonElement);
-
-/** @type {PersonaRecord[]} */
-let personas = [];
-
-function renderPersonas() {
-  personaSelect.innerHTML = "";
-  personas.forEach((p) => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.name;
-    personaSelect.appendChild(opt);
-  });
-}
-
-/**
- * @param {string} [personaId]
- */
-function selectPersona(personaId) {
-  if (!personaId && personas.length > 0) {
-    personaSelect.value = personas[0].id;
-    return;
-  }
-  if (personaId) {
-    personaSelect.value = personaId;
-  }
-}
-
-/**
- * @param {string} [selectId]
- */
-async function refreshPersonas(selectId) {
-  personas = await listPersonas();
-  if (personas.length === 0) {
-    const created = await addPersona("Default Persona");
-    personas = [created];
-    console.log("Seeded default persona");
-    selectId = created.id;
-  }
-  renderPersonas();
-  selectPersona(selectId);
-}
-
-async function addPersonaFlow() {
-  const name = (personaNameInput.value || "").trim();
-  if (!name) {
-    console.log("Persona add cancelled: no name provided");
-    return;
-  }
-  const persona = await addPersona(name);
-  await refreshPersonas(persona.id);
-  personaNameInput.value = "";
-  personaForm.classList.add("hidden");
-  console.log("Persona added", persona);
-}
-
-function captureCurrentPersona() {
-  const selectedId = personaSelect.value;
-  const persona = personas.find((p) => p.id === selectedId);
-  if (!persona) {
-    console.log("Capture skipped: no persona selected");
-    return;
-  }
-  console.log("Capture page for persona", persona);
-}
-
-function togglePersonaForm() {
-  const isHidden = personaForm.classList.contains("hidden");
-  personaForm.classList.toggle("hidden");
-  if (isHidden) {
-    personaNameInput.focus();
-  }
-}
-
-addPersonaBtn.addEventListener("click", togglePersonaForm);
-savePersonaBtn.addEventListener("click", () => {
-  void addPersonaFlow();
-});
-personaNameInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    void addPersonaFlow();
-  }
-});
-captureBtn.addEventListener("click", captureCurrentPersona);
-personaSelect.addEventListener("change", () => {
-  const persona = personas.find((p) => p.id === personaSelect.value);
-  console.log("Persona switched", persona);
-});
-
-void refreshPersonas();
