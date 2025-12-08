@@ -7,3 +7,6 @@ Build a Firefox Persona with browser history, and snapshots of HTML.
 - `npm run ts`: Type-checks JS via TypeScript (strict, no emit).
 - `npm run lint`: Lints with `web-ext lint`.
 - `npm run build`: Builds a ZIP into `dist/`.
+
+### Assets
+- Icons are derived from `assets/person-*.png` (800x800) into `assets/icons/` for add-on and toolbar sizes (19/38/48/96/128). Currently manifest uses the dark variants; light variants are also available.
