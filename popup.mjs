@@ -1,9 +1,9 @@
 // @ts-check
 /**
- * @import {PersonaRecord} from "./types"
+ * @import {PersonaRecord, HistoryInput} from "./types"
  */
 
-import { addPersona, listPersonas } from "./persona-db.mjs";
+import { addHistoryEntry, addPersona, listPersonas } from "./persona-db.mjs";
 
 /**
  * @template {HTMLElement} T
@@ -107,14 +107,32 @@ async function addPersonaFlow() {
   console.log("Persona added", persona);
 }
 
-function captureCurrentPersona() {
+async function captureCurrentPersona() {
   const selectedId = personaSelect.value;
   const persona = personas.find((p) => p.id === selectedId);
   if (!persona) {
     console.log("Capture skipped: no persona selected");
     return;
   }
-  console.log("Capture page for persona", persona);
+  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+  const tab = tabs[0];
+  if (!tab || !tab.url) {
+    console.log("Capture skipped: no active tab url");
+    return;
+  }
+  const title = tab.title || tab.url;
+  const description = tab.title || "";
+  const visitedAt = new Date().toISOString();
+  /** @type {HistoryInput} */
+  const historyPayload = {
+    personaId: persona.id,
+    url: tab.url,
+    title,
+    description,
+    visitedAt
+  };
+  const history = await addHistoryEntry(historyPayload);
+  console.log("Captured page for persona", { persona, history });
 }
 
 function togglePersonaForm() {

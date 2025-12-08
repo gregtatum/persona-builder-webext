@@ -13,6 +13,15 @@ export interface HistoryRecord {
   visitedAt: string;
 }
 
+export interface HistoryInput {
+  id?: string;
+  personaId: string;
+  url: string;
+  title: string;
+  description: string;
+  visitedAt: string;
+}
+
 export interface PageSnapshotRecord {
   historyId: string;
   personaId: string;

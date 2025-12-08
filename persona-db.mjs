@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @import {PersonaRecord, HistoryRecord, PageSnapshotRecord, InsightRecord} from "./types"
+ * @import {PersonaRecord, HistoryRecord, HistoryInput, PageSnapshotRecord, InsightRecord} from "./types"
  */
 
 const DB_NAME = "personaBuilder";
@@ -131,16 +131,14 @@ export async function listPersonas() {
 }
 
 /**
- * @param {string} personaId
- * @param {Omit<HistoryRecord, "personaId">} history
+ * @param {HistoryInput} history
  * @returns {Promise<HistoryRecord>}
  */
-export async function addHistoryEntry(personaId, history) {
+export async function addHistoryEntry(history) {
   const tx = await transaction("readwrite", ["history"]);
   const record = {
     ...history,
-    id: history.id || makeId(),
-    personaId
+    id: history.id || makeId()
   };
   await put(tx.objectStore("history"), record);
   tx.commit?.();
