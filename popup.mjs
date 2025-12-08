@@ -3,7 +3,7 @@
  * @import {PersonaRecord, HistoryInput} from "./types"
  */
 
-import { addHistoryEntry, addPersona, listPersonas } from "./persona-db.mjs";
+import { addHistoryEntry, addPersona, countHistoryForPersona, listPersonas } from "./persona-db.mjs";
 import { log } from "./utils.mjs";
 
 /**
@@ -28,6 +28,7 @@ const savePersonaBtn = getElement("save-persona", HTMLButtonElement);
 const captureBtn = getElement("capture", HTMLButtonElement);
 
 const LAST_PERSONA_KEY = "personaBuilder:lastPersonaId";
+const BADGE_COLOR = "#2563eb";
 
 /** @type {PersonaRecord[]} */
 let personas = [];
@@ -50,11 +51,13 @@ function selectPersona(personaId) {
     const firstId = personas[0].id;
     personaSelect.value = firstId;
     persistLastPersonaId(firstId);
+    void updateBadge(firstId);
     return;
   }
   if (personaId) {
     personaSelect.value = personaId;
     persistLastPersonaId(personaId);
+    void updateBadge(personaId);
   }
 }
 
@@ -106,6 +109,7 @@ async function addPersonaFlow() {
   personaNameInput.value = "";
   personaForm.classList.add("hidden");
   log("Persona added", persona);
+  await updateBadge(persona.id);
 }
 
 async function captureCurrentPersona() {
@@ -134,6 +138,7 @@ async function captureCurrentPersona() {
   };
   const history = await addHistoryEntry(historyPayload);
   log("Captured page for persona", { persona, history });
+  await updateBadge(persona.id);
 }
 
 function togglePersonaForm() {
@@ -159,9 +164,24 @@ personaSelect.addEventListener("change", () => {
   const persona = personas.find((p) => p.id === personaSelect.value);
   if (persona) {
     persistLastPersonaId(persona.id);
+    void updateBadge(persona.id);
   }
   log("Persona switched", persona);
 });
 
 const initialPersonaId = loadLastPersonaId();
 void refreshPersonas(initialPersonaId);
+
+/**
+ * Update the badge count for the given persona.
+ * @param {string} personaId
+ */
+async function updateBadge(personaId) {
+  try {
+    const count = await countHistoryForPersona(personaId);
+    await browser.browserAction.setBadgeBackgroundColor({ color: BADGE_COLOR });
+    await browser.browserAction.setBadgeText({ text: String(count) });
+  } catch (error) {
+    log("Badge update failed", error);
+  }
+}

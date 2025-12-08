@@ -171,3 +171,21 @@ export async function addInsight(personaId, insight) {
   tx.commit?.();
   return record;
 }
+
+/**
+ * Count history entries for a persona.
+ * @param {string} personaId
+ * @returns {Promise<number>}
+ */
+export async function countHistoryForPersona(personaId) {
+  const tx = await transaction("readonly", ["history"]);
+  const index = tx.objectStore("history").index("byPersona");
+  return new Promise((resolve, reject) => {
+    const req = index.count(IDBKeyRange.only(personaId));
+    req.onerror = () => reject(req.error || new Error("count failed"));
+    req.onsuccess = () => {
+      tx.commit?.();
+      resolve(req.result || 0);
+    };
+  });
+}
