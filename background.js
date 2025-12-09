@@ -1,5 +1,20 @@
 // @ts-check
+import { getActivePersonaId, watchActivePersona } from "./active-persona.mjs";
 import { log } from "./utils.mjs";
+
+/** @type {string | undefined} */
+let activePersonaId = undefined;
+
+async function initActivePersona() {
+  activePersonaId = await getActivePersonaId();
+  log("Active persona initialized", activePersonaId);
+  watchActivePersona((id) => {
+    activePersonaId = typeof id === "string" ? id : undefined;
+    log("Active persona changed", activePersonaId);
+  });
+}
+
+void initActivePersona();
 
 browser.runtime.onInstalled.addListener(() => {
   log("Persona Builder stub installed");

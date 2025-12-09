@@ -3,6 +3,7 @@
  * @import {PersonaRecord, HistoryInput} from "./types"
  */
 
+import { getActivePersonaId, setActivePersonaId } from "./active-persona.mjs";
 import { addHistoryEntry, addPersona, countHistoryForPersona, listPersonas } from "./persona-db.mjs";
 import { log } from "./utils.mjs";
 
@@ -27,7 +28,6 @@ const addPersonaBtn = getElement("add-persona", HTMLButtonElement);
 const savePersonaBtn = getElement("save-persona", HTMLButtonElement);
 const captureBtn = getElement("capture", HTMLButtonElement);
 
-const LAST_PERSONA_KEY = "personaBuilder:lastPersonaId";
 const BADGE_COLOR = "#2563eb";
 
 /** @type {PersonaRecord[]} */
@@ -50,13 +50,13 @@ function selectPersona(personaId) {
   if (!personaId && personas.length > 0) {
     const firstId = personas[0].id;
     personaSelect.value = firstId;
-    persistLastPersonaId(firstId);
+    void setActivePersonaId(firstId);
     void updateBadge(firstId);
     return;
   }
   if (personaId) {
     personaSelect.value = personaId;
-    persistLastPersonaId(personaId);
+    void setActivePersonaId(personaId);
     void updateBadge(personaId);
   }
 }
@@ -74,28 +74,6 @@ async function refreshPersonas(selectId) {
   }
   renderPersonas();
   selectPersona(selectId);
-}
-
-/**
- * @returns {string | undefined}
- */
-function loadLastPersonaId() {
-  try {
-    return localStorage.getItem(LAST_PERSONA_KEY) || undefined;
-  } catch (_error) {
-    return undefined;
-  }
-}
-
-/**
- * @param {string} id
- */
-function persistLastPersonaId(id) {
-  try {
-    localStorage.setItem(LAST_PERSONA_KEY, id);
-  } catch (_error) {
-    // Best effort; ignore storage errors (e.g., quota).
-  }
 }
 
 async function addPersonaFlow() {
@@ -163,14 +141,16 @@ captureBtn.addEventListener("click", captureCurrentPersona);
 personaSelect.addEventListener("change", () => {
   const persona = personas.find((p) => p.id === personaSelect.value);
   if (persona) {
-    persistLastPersonaId(persona.id);
+    void setActivePersonaId(persona.id);
     void updateBadge(persona.id);
   }
   log("Persona switched", persona);
 });
 
-const initialPersonaId = loadLastPersonaId();
-void refreshPersonas(initialPersonaId);
+void (async () => {
+  const initialPersonaId = await getActivePersonaId();
+  await refreshPersonas(initialPersonaId);
+})();
 
 /**
  * Update the badge count for the given persona.
