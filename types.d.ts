@@ -38,3 +38,7 @@ export interface InsightRecord {
   content: any;
   createdAt: string;
 }
+
+export type InsightInput = Omit<InsightRecord, "personaId" | "id"> & {
+  id?: string;
+};

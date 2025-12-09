@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @import {PersonaRecord, HistoryRecord, HistoryInput, PageSnapshotRecord, InsightRecord} from "./types"
+ * @import {PersonaRecord, HistoryRecord, HistoryInput, PageSnapshotRecord, InsightRecord, InsightInput} from "./types"
  */
 
 const DB_NAME = "personaBuilder";
@@ -63,6 +63,14 @@ export function openDb() {
       resolve(request.result);
     };
   });
+}
+
+/** Close the cached database connection (useful for tests). */
+export function closeDb() {
+  if (db) {
+    db.close();
+    db = null;
+  }
 }
 
 /**
@@ -179,7 +187,7 @@ export async function addPageSnapshot(snapshot) {
 
 /**
  * @param {string} personaId
- * @param {Omit<InsightRecord, "personaId">} insight
+ * @param {InsightInput} insight
  * @returns {Promise<InsightRecord>}
  */
 export async function addInsight(personaId, insight) {
