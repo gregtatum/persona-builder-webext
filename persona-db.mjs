@@ -152,6 +152,32 @@ export async function listHistoryForPersona(personaId) {
 }
 
 /**
+ * Delete a history entry by id.
+ * @param {string} historyId
+ * @returns {Promise<void>}
+ */
+export async function deleteHistoryEntry(historyId) {
+  const tx = await transaction("readwrite", ["history", "pageSnapshots"]);
+  await Promise.all([
+    /** @type {Promise<void>} */ (
+      new Promise((resolve, reject) => {
+        const req = tx.objectStore("history").delete(historyId);
+        req.onerror = () => reject(req.error || new Error("delete history failed"));
+        req.onsuccess = () => resolve();
+      })
+    ),
+    /** @type {Promise<void>} */ (
+      new Promise((resolve, reject) => {
+        const req = tx.objectStore("pageSnapshots").delete(historyId);
+        req.onerror = () => reject(req.error || new Error("delete snapshot failed"));
+        req.onsuccess = () => resolve();
+      })
+    )
+  ]);
+  tx.commit?.();
+}
+
+/**
  * Lookup a history record by persona and URL.
  * @param {string} personaId
  * @param {string} url

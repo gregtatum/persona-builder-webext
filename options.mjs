@@ -4,7 +4,7 @@
  */
 
 import { getActivePersonaId, setActivePersonaId, watchActivePersona } from "./active-persona.mjs";
-import { listHistoryForPersona, listPersonas } from "./persona-db.mjs";
+import { deleteHistoryEntry, listHistoryForPersona, listPersonas } from "./persona-db.mjs";
 import { log } from "./utils.mjs";
 
 const personaNameEl = document.getElementById("persona-name");
@@ -116,10 +116,13 @@ function renderHistory(history) {
     const li = document.createElement("li");
     li.className = "history-item";
 
+    const meta = document.createElement("div");
+    meta.className = "history-meta";
+
     const title = document.createElement("p");
     title.className = "history-title";
     title.textContent = entry.title || entry.url;
-    li.appendChild(title);
+    meta.appendChild(title);
 
     const link = document.createElement("a");
     link.className = "history-link";
@@ -127,7 +130,19 @@ function renderHistory(history) {
     link.target = "_blank";
     link.rel = "noreferrer";
     link.textContent = entry.url;
-    li.appendChild(link);
+    meta.appendChild(link);
+
+    li.appendChild(meta);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.addEventListener("click", async () => {
+      await deleteHistoryEntry(entry.id);
+      await renderPersonaAndHistory(entry.personaId);
+    });
+    li.appendChild(deleteBtn);
 
     historyListEl.appendChild(li);
   });

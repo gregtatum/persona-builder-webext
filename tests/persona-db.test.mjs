@@ -227,6 +227,31 @@ describe("persona-db", () => {
     );
   });
 
+  it("deletes history entries and snapshots", async () => {
+    const persona = await personaDb.addPersona("Delete Persona");
+    const entry = await personaDb.addHistoryEntry({
+      personaId: persona.id,
+      url: "https://delete.me/",
+      title: "Delete Me",
+      description: "Desc",
+      visitedAt: "2024-02-01T00:00:00.000Z",
+    });
+    await personaDb.addPageSnapshot({
+      historyId: entry.id,
+      personaId: persona.id,
+      url: entry.url,
+      capturedAt: "2024-02-02T00:00:00.000Z",
+      html: "<p>to be removed</p>",
+    });
+
+    await personaDb.deleteHistoryEntry(entry.id);
+
+    const history = await readAllFromStore("history");
+    const snapshots = await readAllFromStore("pageSnapshots");
+    expect(history).toHaveLength(0);
+    expect(snapshots).toHaveLength(0);
+  });
+
   it("sorts personas by createdAt ascending", async () => {
     const first = await personaDb.addPersona("First");
     const second = await personaDb.addPersona("Second");

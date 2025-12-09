@@ -57,6 +57,9 @@
       .history-item {
         padding-bottom: 10px;
         border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        gap: 12px;
+        align-items: center;
       }
       .history-item:last-child {
         border-bottom: none;
@@ -73,12 +76,30 @@
         text-decoration: none;
         word-break: break-all;
       }
+      .history-meta {
+        flex: 1;
+        min-width: 0;
+      }
       .history-link:hover {
         text-decoration: underline;
       }
       .empty {
         color: #6b7280;
         margin: 8px 0 0;
+      }
+      .delete-btn {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #b91c1c;
+        border-radius: 4px;
+        padding: 6px 8px;
+        cursor: pointer;
+        font: inherit;
+        white-space: nowrap;
+      }
+      .delete-btn:hover {
+        background: #fef2f2;
+        border-color: #fecdd3;
       }
     </style>
   </head>
