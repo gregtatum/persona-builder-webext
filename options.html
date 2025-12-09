@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Persona Builder</title>
+    <title>View Persona</title>
     <style>
       :root {
         color-scheme: light;
@@ -16,13 +16,68 @@
         color: #0f172a;
       }
       header {
-        font-size: 24px;
-        font-weight: 700;
         margin-bottom: 16px;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 8px;
+      }
+      .subtitle {
+        margin: 0;
+        color: #475569;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .history-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 12px;
+      }
+      .history-item {
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .history-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .history-title {
+        margin: 0;
+        font-weight: 600;
+      }
+      .history-link {
+        display: inline-block;
+        margin-top: 4px;
+        color: #2563eb;
+        text-decoration: none;
+        word-break: break-all;
+      }
+      .history-link:hover {
+        text-decoration: underline;
+      }
+      .empty {
+        color: #6b7280;
+        margin: 8px 0 0;
       }
     </style>
   </head>
   <body>
-    <header>Persona Builder</header>
+    <header>
+      <h1>View Persona</h1>
+      <p class="subtitle">See the active persona and its captured pages.</p>
+    </header>
+    <section class="card">
+      <h2 id="persona-name">Active persona: loading…</h2>
+      <ul id="history-list" class="history-list"></ul>
+      <p id="empty-state" class="empty" hidden>No captures yet.</p>
+    </section>
+    <script type="module" src="options.mjs"></script>
   </body>
 </html>

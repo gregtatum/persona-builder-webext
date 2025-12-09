@@ -139,6 +139,19 @@ export async function listPersonas() {
 }
 
 /**
+ * List history entries for a persona, sorted by visitedAt descending.
+ * @param {string} personaId
+ * @returns {Promise<HistoryRecord[]>}
+ */
+export async function listHistoryForPersona(personaId) {
+  const tx = await transaction("readonly", ["history"]);
+  const store = tx.objectStore("history");
+  const all = await getAll(/** @type {IDBIndex} */ (store.index("byPersona")), IDBKeyRange.only(personaId));
+  tx.commit?.();
+  return all.sort((a, b) => b.visitedAt.localeCompare(a.visitedAt));
+}
+
+/**
  * Lookup a history record by persona and URL.
  * @param {string} personaId
  * @param {string} url
