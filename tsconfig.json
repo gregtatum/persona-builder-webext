@@ -13,5 +13,5 @@
     "resolveJsonModule": true
   },
   "include": ["**/*.js", "**/*.mjs", "manifest.json"],
-  "exclude": ["node_modules", "dist", "SingleFile/**", "tools/**"]
+  "exclude": ["node_modules", "dist", "SingleFile/**", "vendor/**", "tools/**"]
 }
