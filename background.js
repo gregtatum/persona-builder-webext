@@ -70,6 +70,9 @@ async function handleCommandAddHistory() {
   void updateBadge(personaId);
 }
 
+/**
+ * @param {string} personaId
+ */
 async function updateBadge(personaId) {
   try {
     const count = await countHistoryForPersona(personaId);

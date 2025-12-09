@@ -34,7 +34,10 @@ export async function setActivePersonaId(id) {
  * @returns {() => void} unsubscribe
  */
 export function watchActivePersona(listener) {
-  /** @type {(changes: Record<string, import("./types").PersonaRecord | undefined>, area: string) => void} */
+  /**
+   * @param {{ [key: string]: browser.storage.StorageChange }} changes
+   * @param {string} area
+   */
   const handler = (changes, area) => {
     if (area !== "local") {
       return;
