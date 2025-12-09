@@ -10,7 +10,9 @@
   },
   "permissions": ["activeTab"],
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["background.js"],
+    "persistent": false,
+    "type": "module"
   },
   "browser_action": {
     "default_title": "Persona Builder",
@@ -26,5 +28,13 @@
       "js": ["content.js"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "commands": {
+    "example-log-command": {
+      "description": "Log that the example command works",
+      "suggested_key": {
+        "default": "F2"
+      }
+    }
+  }
 }

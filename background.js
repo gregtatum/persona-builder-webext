@@ -11,3 +11,10 @@ browser.runtime.onInstalled.addListener(() => {
 browser.runtime.onMessage.addListener((message) => {
   log("Persona Builder stub received message", message);
 });
+
+browser.commands.onCommand.addListener((command) => {
+  if (command === "example-log-command") {
+    console.log("it works");
+    log("example-log-command fired");
+  }
+});
