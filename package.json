@@ -5,7 +5,7 @@
   "main": "background.js",
   "scripts": {
     "start": "./bin/run-web-ext.sh",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "ts": "tsc --noEmit",
     "lint": "web-ext lint --config ./.web-ext-config.mjs",
     "build": "web-ext build --overwrite-dest --config ./.web-ext-config.mjs"
@@ -15,6 +15,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/firefox-webext-browser": "^143.0.0",
+    "fake-indexeddb": "^6.2.5",
     "jest": "^30.2.0",
     "typescript": "^5.9.3",
     "web-ext": "^9.2.0"
