@@ -4,7 +4,12 @@
  */
 
 import { getActivePersonaId, setActivePersonaId } from "./active-persona.mjs";
-import { addHistoryEntry, addPersona, countHistoryForPersona, listPersonas } from "./persona-db.mjs";
+import {
+  addHistoryEntry,
+  addPersona,
+  countHistoryForPersona,
+  listPersonas,
+} from "./persona-db.mjs";
 import { log } from "./utils.mjs";
 
 /**
@@ -113,11 +118,14 @@ async function captureCurrentPersona() {
     url: tab.url,
     title,
     description,
-    visitedAt
+    visitedAt,
   };
   const history = await addHistoryEntry(historyPayload);
   log("Captured page for persona", { persona, history });
   await updateBadge(persona.id);
+  if (tab.id) {
+    void captureSingleFileSnapshot(tab.id);
+  }
 }
 
 function togglePersonaForm() {
@@ -168,5 +176,24 @@ async function updateBadge(personaId) {
     await browser.browserAction.setBadgeText({ text: String(count) });
   } catch (error) {
     log("Badge update failed", error);
+  }
+}
+
+/**
+ * Console log a SingleFile snapshot from the tab.
+ * @param {number} tabId
+ */
+async function captureSingleFileSnapshot(tabId) {
+  try {
+    const response = await browser.tabs.sendMessage(tabId, {
+      type: "capture-singlefile",
+    });
+    if (response?.ok) {
+      console.log(response.content || "");
+    } else {
+      log("SingleFile snapshot failed", response?.error);
+    }
+  } catch (error) {
+    log("SingleFile snapshot errored", error);
   }
 }

@@ -68,6 +68,9 @@ async function handleCommandAddHistory() {
   });
   log("Added history from command", { personaId, url: tab.url });
   void updateBadge(personaId);
+  if (tab.id !== undefined) {
+    void captureSingleFileSnapshot(tab.id);
+  }
 }
 
 /**
@@ -79,5 +82,26 @@ async function updateBadge(personaId) {
     await browser.browserAction.setBadgeText({ text: String(count) });
   } catch (error) {
     log("Badge update failed", error);
+  }
+}
+
+/**
+ * Request a SingleFile snapshot in the active tab and log the content.
+ * @param {number | undefined} tabId
+ */
+async function captureSingleFileSnapshot(tabId) {
+  if (typeof tabId !== "number") {
+    log("SingleFile snapshot skipped: missing tab id");
+    return;
+  }
+  try {
+    const response = await browser.tabs.sendMessage(tabId, { type: "capture-singlefile" });
+    if (response?.ok) {
+      console.log(response.content || "");
+    } else {
+      log("SingleFile snapshot failed", response?.error);
+    }
+  } catch (error) {
+    log("SingleFile snapshot errored", error);
   }
 }

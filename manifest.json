@@ -8,7 +8,7 @@
     "96": "assets/icons/person-dark-96.png",
     "128": "assets/icons/person-dark-128.png"
   },
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "<all_urls>"],
   "background": {
     "scripts": ["background.js"],
     "persistent": false,
@@ -41,5 +41,9 @@
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
-  }
+  },
+  "web_accessible_resources": [
+    "content.mjs",
+    "vendor/singlefile/single-file.js"
+  ]
 }
