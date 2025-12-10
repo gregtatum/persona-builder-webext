@@ -115,6 +115,23 @@
         background: #fef2f2;
         border-color: #fecdd3;
       }
+      .primary-btn {
+        border: 1px solid #2563eb;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 4px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font: inherit;
+      }
+      .primary-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .primary-btn:hover:not(:disabled) {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+      }
     </style>
   </head>
   <body>
@@ -126,6 +143,7 @@
       <div class="controls">
         <label for="persona-select">Active persona</label>
         <select id="persona-select"></select>
+        <button id="save-zip-btn" type="button" class="primary-btn">Save to Zip</button>
       </div>
       <h2 id="persona-name">Active persona: loading…</h2>
       <ul id="history-list" class="history-list"></ul>

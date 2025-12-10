@@ -14,6 +14,12 @@ import {
   listHistoryForPersona,
   listPersonas,
 } from "./persona-db.mjs";
+import {
+  BlobReader as ZipBlobReader,
+  BlobWriter as ZipBlobWriter,
+  ZipWriter,
+  configure as configureZip,
+} from "./vendor/zipjs/index.js";
 
 /**
  * @param {any} message
@@ -29,6 +35,9 @@ const emptyStateEl = document.getElementById("empty-state");
 const personaSelectEl = /** @type {HTMLSelectElement | null} */ (
   document.getElementById("persona-select")
 );
+const saveZipBtn = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("save-zip-btn")
+);
 
 async function load() {
   const personas = await listPersonas();
@@ -43,6 +52,10 @@ async function load() {
       await setActivePersonaId(selectedId);
       await renderPersonaAndHistory(selectedId);
     });
+  }
+
+  if (saveZipBtn) {
+    saveZipBtn.addEventListener("click", () => void handleSaveZip());
   }
 
   watchActivePersona(async (id) => {
@@ -99,6 +112,10 @@ async function renderPersonaAndHistory(personaId) {
 
   const history = await listHistoryForPersona(personaId);
   renderHistory(history);
+
+  if (saveZipBtn) {
+    saveZipBtn.disabled = !history.length;
+  }
 
   if (personaSelectEl) {
     personaSelectEl.value = personaId;
@@ -220,6 +237,108 @@ function renderEmpty(isEmpty) {
     return;
   }
   emptyStateEl.hidden = !isEmpty;
+}
+
+async function handleSaveZip() {
+  if (!personaSelectEl || !saveZipBtn) {
+    return;
+  }
+  saveZipBtn.disabled = true;
+  saveZipBtn.textContent = "Preparing zip…";
+  try {
+    const personaId = await getActivePersonaId();
+    if (!personaId) {
+      throw new Error("No active persona to export");
+    }
+
+    const personas = await listPersonas();
+    const persona = personas.find((p) => p.id === personaId);
+    const history = await listHistoryForPersona(personaId);
+
+    configureZip({ useWebWorkers: false });
+    const writer = new ZipWriter(new ZipBlobWriter("application/zip"));
+
+    /** @type {Array<{entry: import('./types').HistoryRecord, snapshotPath: string, html: string}>} */
+    const snapshotEntries = [];
+    for (const entry of history) {
+      try {
+        const snapshot = await getPageSnapshot(entry.id);
+        if (!snapshot?.html) {
+          continue;
+        }
+        const path = buildSnapshotPath(entry.url);
+        snapshotEntries.push({ entry, snapshotPath: path, html: snapshot.html });
+      } catch (error) {
+        log("Skipping snapshot due to error", entry.url, error);
+      }
+    }
+
+    const personaData = {
+      persona: persona || { id: personaId, name: personaId },
+      history: snapshotEntries.map(({ entry, snapshotPath }) => ({
+        ...entry,
+        snapshotPath: `./${snapshotPath}`,
+      })),
+    };
+
+    const personaJson = JSON.stringify(personaData, null, 2);
+    await writer.add("persona.json", new ZipBlobReader(new Blob([personaJson], { type: "application/json" })));
+
+    for (const { snapshotPath, html } of snapshotEntries) {
+      await writer.add(snapshotPath, new ZipBlobReader(new Blob([html], { type: "text/html" })));
+    }
+
+    const zipBlob = await writer.close();
+    const url = URL.createObjectURL(zipBlob);
+    const personaSlug = sanitizeSegment(persona?.name || personaId || "persona");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Persona-${personaSlug || "persona"}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    saveZipBtn.textContent = "Saved!";
+    setTimeout(() => {
+      if (saveZipBtn) {
+        saveZipBtn.textContent = "Save to Zip";
+        saveZipBtn.disabled = false;
+      }
+    }, 1200);
+  } catch (error) {
+    log("Failed to save persona zip", error);
+    saveZipBtn.textContent = "Save to Zip";
+    saveZipBtn.disabled = false;
+  }
+}
+
+/**
+ * @param {string} url
+ */
+function buildSnapshotPath(url) {
+  try {
+    const parsed = new URL(url);
+    const host = sanitizeSegment(parsed.hostname || "unknown");
+    const pathParts = parsed.pathname.split("/").filter(Boolean).map(sanitizeSegment);
+    const baseParts = pathParts.length ? pathParts : ["index"];
+    const searchPart = parsed.search ? sanitizeSegment(`query_${parsed.search.slice(1)}`) : "";
+    const hashPart = parsed.hash ? sanitizeSegment(`hash_${parsed.hash.slice(1)}`) : "";
+    const combinedParts = [...baseParts];
+    if (searchPart) combinedParts.push(searchPart);
+    if (hashPart) combinedParts.push(hashPart);
+    const restCombined = combinedParts.join("_") || "index";
+    const finalRest = restCombined.endsWith(".html") ? restCombined : `${restCombined}.html`;
+    return `snapshot/${host}/${finalRest}`;
+  } catch {
+    const fallback = `${sanitizeSegment(url) || "page"}.html`;
+    return `snapshot/unknown/${fallback}`;
+  }
+}
+
+/**
+ * @param {string} value
+ */
+function sanitizeSegment(value) {
+  const cleaned = value.replace(/[^a-zA-Z0-9._-]/g, "_");
+  return cleaned || "item";
 }
 
 void load().catch((error) => log("Failed to load persona view", error));
