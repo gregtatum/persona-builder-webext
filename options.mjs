@@ -16,16 +16,14 @@ import {
   listPersonas,
   addPersona,
   addHistoryEntry,
-  addPageSnapshot
+  addPageSnapshot,
 } from "./persona-db.mjs";
 import {
-  BlobReader as ZipBlobReader,
-  BlobWriter as ZipBlobWriter,
-  TextWriter as ZipTextWriter,
-  ZipWriter,
-  ZipReader,
-  configure as configureZip,
-} from "./vendor/zipjs/index.js";
+  buildPersonaZip,
+  parsePersonaZip,
+  buildSnapshotPath,
+  sanitizeSegment,
+} from "./zip-persona.mjs";
 
 /**
  * @param {any} message
@@ -321,50 +319,33 @@ function setupDropImport() {
  */
 async function importPersonaZip(file) {
   try {
-    configureZip({ useWebWorkers: false });
-    const reader = new ZipReader(new ZipBlobReader(file));
-    const entries = await reader.getEntries();
-    const personaEntry = entries.find((entry) => entry.filename === "persona.json");
-    if (!personaEntry) {
-      throw new Error("persona.json not found in zip");
-    }
     showNotification(`Loading persona from ${file.name}...`);
-    const personaJson = personaEntry.getData
-      ? await personaEntry.getData(new ZipTextWriter())
-      : "";
-    const parsed = personaJson ? JSON.parse(personaJson) : {};
+    const { persona: importedPersona, history } = await parsePersonaZip(file);
     const personas = await listPersonas();
-    const targetName = ensureUniqueName(parsed?.persona?.name || "Imported Persona", personas);
+    const targetName = ensureUniqueName(importedPersona?.name || "Imported Persona", personas);
     const personaRecord = await addPersona(targetName);
 
-    const historyItems = Array.isArray(parsed?.history) ? parsed.history : [];
-    for (const item of historyItems) {
-      const snapshotPath = typeof item.snapshotPath === "string" ? item.snapshotPath.replace(/^\.\//, "") : null;
-      const snapshotEntry = snapshotPath
-        ? entries.find((entry) => entry.filename === snapshotPath)
-        : undefined;
+    for (const item of history) {
       /** @type {import("./types").HistoryInput} */
       const historyInput = {
         personaId: personaRecord.id,
-        url: item.url,
-        title: item.title || item.url,
-        description: item.description || "",
-        visitedAt: item.visitedAt || new Date().toISOString(),
+        url: item.entry.url,
+        title: item.entry.title || item.entry.url,
+        description: item.entry.description || "",
+        visitedAt: item.entry.visitedAt || new Date().toISOString(),
       };
       const savedHistory = await addHistoryEntry(historyInput);
-      if (snapshotEntry?.getData) {
-        const html = await snapshotEntry.getData(new ZipTextWriter());
+      if (item.snapshotHtml) {
         await addPageSnapshot({
           historyId: savedHistory.id,
           personaId: personaRecord.id,
           url: savedHistory.url,
-          capturedAt: item.capturedAt || savedHistory.visitedAt,
-          html
+          capturedAt: item.entry.capturedAt || savedHistory.visitedAt,
+          html: item.snapshotHtml
         });
       }
     }
 
-    await reader.close();
     await setActivePersonaId(personaRecord.id);
     await renderPersonaAndHistory(personaRecord.id);
     log("Imported persona from zip", { file: file.name, persona: targetName });
@@ -420,40 +401,22 @@ async function handleSaveZip() {
     const persona = personas.find((p) => p.id === personaId);
     const history = await listHistoryForPersona(personaId);
 
-    configureZip({ useWebWorkers: false });
-    const writer = new ZipWriter(new ZipBlobWriter("application/zip"));
-
-    /** @type {Array<{entry: import('./types').HistoryRecord, snapshotPath: string, html: string}>} */
-    const snapshotEntries = [];
+    const historyWithSnapshots = [];
     for (const entry of history) {
-      try {
-        const snapshot = await getPageSnapshot(entry.id);
-        if (!snapshot?.html) {
-          continue;
-        }
-        const path = buildSnapshotPath(entry.url);
-        snapshotEntries.push({ entry, snapshotPath: path, html: snapshot.html });
-      } catch (error) {
+      const snapshot = await getPageSnapshot(entry.id).catch((error) => {
         log("Skipping snapshot due to error", entry.url, error);
-      }
+        return undefined;
+      });
+      historyWithSnapshots.push({ entry, html: snapshot?.html });
     }
 
-    const personaData = {
-      persona: persona || { id: personaId, name: personaId },
-      history: snapshotEntries.map(({ entry, snapshotPath }) => ({
-        ...entry,
-        snapshotPath: `./${snapshotPath}`,
-      })),
+    const fallbackPersona = {
+      id: personaId,
+      name: personaId,
+      createdAt: new Date().toISOString(),
     };
+    const zipBlob = await buildPersonaZip(persona || fallbackPersona, historyWithSnapshots);
 
-    const personaJson = JSON.stringify(personaData, null, 2);
-    await writer.add("persona.json", new ZipBlobReader(new Blob([personaJson], { type: "application/json" })));
-
-    for (const { snapshotPath, html } of snapshotEntries) {
-      await writer.add(snapshotPath, new ZipBlobReader(new Blob([html], { type: "text/html" })));
-    }
-
-    const zipBlob = await writer.close();
     const url = URL.createObjectURL(zipBlob);
     const personaSlug = sanitizeSegment(persona?.name || personaId || "persona");
     const a = document.createElement("a");
@@ -473,37 +436,6 @@ async function handleSaveZip() {
     saveZipBtn.textContent = "Save to Zip";
     saveZipBtn.disabled = false;
   }
-}
-
-/**
- * @param {string} url
- */
-function buildSnapshotPath(url) {
-  try {
-    const parsed = new URL(url);
-    const host = sanitizeSegment(parsed.hostname || "unknown");
-    const pathParts = parsed.pathname.split("/").filter(Boolean).map(sanitizeSegment);
-    const baseParts = pathParts.length ? pathParts : ["index"];
-    const searchPart = parsed.search ? sanitizeSegment(`query_${parsed.search.slice(1)}`) : "";
-    const hashPart = parsed.hash ? sanitizeSegment(`hash_${parsed.hash.slice(1)}`) : "";
-    const combinedParts = [...baseParts];
-    if (searchPart) combinedParts.push(searchPart);
-    if (hashPart) combinedParts.push(hashPart);
-    const restCombined = combinedParts.join("_") || "index";
-    const finalRest = restCombined.endsWith(".html") ? restCombined : `${restCombined}.html`;
-    return `snapshot/${host}/${finalRest}`;
-  } catch {
-    const fallback = `${sanitizeSegment(url) || "page"}.html`;
-    return `snapshot/unknown/${fallback}`;
-  }
-}
-
-/**
- * @param {string} value
- */
-function sanitizeSegment(value) {
-  const cleaned = value.replace(/[^a-zA-Z0-9._-]/g, "_");
-  return cleaned || "item";
 }
 
 void load().catch((error) => log("Failed to load persona view", error));
