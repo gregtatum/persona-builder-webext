@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Fetch a prebuilt copy of zip.js and copy its dist files into vendor/zipjs.
+# Usage:
+#   bin/update-zipjs [version]
+# Example:
+#   bin/update-zipjs 2.6.40
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+VERSION="${1:-2.6.40}"
+DEST_DIR="${ROOT_DIR}/vendor/zipjs"
+TMP_DIR="$(mktemp -d)"
+
+cleanup() {
+  # Only remove the temp dir if it still sits under /tmp to avoid surprises.
+  case "${TMP_DIR}" in
+    /tmp/*) rm -rf -- "${TMP_DIR}" ;;
+    *) echo "Skipping cleanup of unexpected TMP_DIR=${TMP_DIR}" >&2 ;;
+  esac
+}
+trap cleanup EXIT
+
+echo "Downloading @zip.js/zip.js@${VERSION}..."
+pushd "${TMP_DIR}" >/dev/null
+TARBALL="$(npm pack "@zip.js/zip.js@${VERSION}" | tail -n1)"
+tar -xzf "${TARBALL}"
+popd >/dev/null
+
+SRC_DIST="${TMP_DIR}/package/dist"
+if [[ ! -d "${SRC_DIST}" ]]; then
+  echo "dist directory not found in zip.js package. Aborting." >&2
+  exit 1
+fi
+
+echo "Updating vendor assets in ${DEST_DIR}"
+rm -rf "${DEST_DIR}"
+mkdir -p "${DEST_DIR}"
+cp -R "${SRC_DIST}/." "${DEST_DIR}/"
+cp "${TMP_DIR}/package/README.md" "${DEST_DIR}/README.md"
+cp "${TMP_DIR}/package/package.json" "${DEST_DIR}/package.json"
+cp "${TMP_DIR}/package/index.d.ts" "${DEST_DIR}/index.d.ts"
+
+echo "Done. Vendored files:"
+ls "${DEST_DIR}"
