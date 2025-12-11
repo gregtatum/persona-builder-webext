@@ -329,11 +329,29 @@ export async function addInsight(personaId, insight) {
   const record = {
     ...insight,
     id: insight.id || makeId(),
+    updated_at: insight.updated_at || Date.now(),
+    is_deleted: insight.is_deleted ?? false,
     personaId
   };
   await put(tx.objectStore("insights"), record);
   tx.commit?.();
   return record;
+}
+
+/**
+ * List insights for a persona ordered by updated_at descending.
+ * @param {string} personaId
+ * @returns {Promise<import("./types").InsightRecord[]>}
+ */
+export async function listInsightsForPersona(personaId) {
+  const tx = await transaction("readonly", ["insights"]);
+  const index = tx.objectStore("insights").index("byPersona");
+  const results = await getAll(
+    /** @type {IDBIndex} */ (index),
+    IDBKeyRange.only(personaId)
+  );
+  tx.commit?.();
+  return results.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
 }
 
 /**

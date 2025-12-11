@@ -226,16 +226,22 @@ describe("persona-db", () => {
     const persona = await personaDb.addPersona("Insight Persona");
 
     const generated = await personaDb.addInsight(persona.id, {
-      kind: "note",
-      content: { foo: "bar" },
-      createdAt: "2024-02-01T00:00:00.000Z",
+      insight_summary: "Generated summary",
+      category: "News",
+      intent: "Communicate / Share",
+      score: 3,
+      updated_at: 1700000000000,
+      is_deleted: false,
     });
 
     const provided = await personaDb.addInsight(persona.id, {
       id: "given-id",
-      kind: "note",
-      content: "text",
-      createdAt: "2024-02-02T00:00:00.000Z",
+      insight_summary: "Provided summary",
+      category: "Travel & Transportation",
+      intent: "Plan / Organize",
+      score: 5,
+      updated_at: 1700000001000,
+      is_deleted: false,
     });
 
     expect(generated.id).toBeTruthy();
@@ -250,9 +256,9 @@ describe("persona-db", () => {
       persona.id,
       persona.id,
     ]);
-    expect(typedInsights.find((i) => i.id === "given-id")?.content).toBe(
-      "text"
-    );
+    expect(
+      typedInsights.find((i) => i.id === "given-id")?.insight_summary
+    ).toBe("Provided summary");
   });
 
   it("deletes history entries and snapshots", async () => {
@@ -297,9 +303,12 @@ describe("persona-db", () => {
       html: "<p>to be removed</p>",
     });
     await personaDb.addInsight(persona.id, {
-      kind: "note",
-      content: "remove insight",
-      createdAt: "2024-02-03T00:00:00.000Z",
+      insight_summary: "remove insight",
+      category: "News",
+      intent: "Communicate / Share",
+      score: 2,
+      updated_at: 1700000002000,
+      is_deleted: false,
     });
 
     await personaDb.deletePersona(persona.id);
@@ -344,5 +353,28 @@ describe("persona-db", () => {
       id: persona.id,
       name: "Updated Name",
     });
+  });
+
+  it("lists insights by persona ordered by updated_at descending", async () => {
+    const persona = await personaDb.addPersona("Insight Sort Persona");
+    await personaDb.addInsight(persona.id, {
+      insight_summary: "Older",
+      category: "News",
+      intent: "Research / Learn",
+      score: 2,
+      updated_at: 1700000000000,
+      is_deleted: false,
+    });
+    await personaDb.addInsight(persona.id, {
+      insight_summary: "Newer",
+      category: "Travel & Transportation",
+      intent: "Plan / Organize",
+      score: 5,
+      updated_at: 1700000005000,
+      is_deleted: false,
+    });
+
+    const insights = await personaDb.listInsightsForPersona(persona.id);
+    expect(insights.map((i) => i.insight_summary)).toEqual(["Newer", "Older"]);
   });
 });

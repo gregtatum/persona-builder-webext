@@ -33,10 +33,12 @@ export interface PageSnapshotRecord {
 export interface InsightRecord {
   id: string;
   personaId: string;
-  kind: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: any;
-  createdAt: string;
+  insight_summary: string;
+  category: string;
+  intent: string;
+  score: number;
+  updated_at: number;
+  is_deleted: boolean;
 }
 
 export type InsightInput = Omit<InsightRecord, "personaId" | "id"> & {
