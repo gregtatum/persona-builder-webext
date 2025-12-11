@@ -26,10 +26,13 @@ import {
 import {
   buildPersonaZip,
   parsePersonaZip,
-  buildSnapshotPath,
   sanitizeSegment,
 } from "./zip-persona.mjs";
-import { CATEGORIES_LIST, INTENTS_LIST } from "./insights-constants.mjs";
+import { renderHistoryTab } from "./options-history.mjs";
+import {
+  renderInsights,
+  setupInsightAddForm,
+} from "./options-insights.mjs";
 
 /**
  * @param {any} message
@@ -80,6 +83,35 @@ const insightAddBtn = /** @type {HTMLButtonElement | null} */ (
 );
 const dropOverlay = document.getElementById("drop-overlay");
 const notificationEl = document.getElementById("notification");
+
+const historyDeps = {
+  historyListEl,
+  emptyStateEl,
+  getSnapshot: getPageSnapshot,
+  /** @param {import("./types").HistoryRecord} entry */
+  onDeleteHistory: async (entry) => {
+    await deleteHistoryEntry(entry.id);
+    await renderPersonaAndHistory(entry.personaId);
+  },
+  log,
+};
+
+const insightsDeps = {
+  insightsRowsEl,
+  insightsEmptyEl,
+  insightAddSummary,
+  insightAddCategory,
+  insightAddIntent,
+  insightAddScore,
+  insightAddBtn,
+  listInsightsForPersona,
+  addInsight,
+  updateInsight,
+  deleteInsight,
+  showNotification,
+  log,
+  getActivePersonaId,
+};
 
 async function load() {
   const personas = await listPersonas();
@@ -133,7 +165,7 @@ async function load() {
     await renderPersonaAndHistory(current);
   };
 
-  setupInsightAddForm();
+  setupInsightAddForm(insightsDeps);
 
   setActiveTab("history");
 
@@ -169,8 +201,8 @@ function renderPersonaOptions(personas) {
 async function renderPersonaAndHistory(personaId) {
   if (!personaId) {
     renderPersonaName("", { disabled: true, placeholder: "No active persona" });
-    renderHistory([]);
-    await renderInsights(undefined);
+    renderHistoryTab([], historyDeps);
+    await renderInsights(undefined, insightsDeps);
     return;
   }
 
@@ -182,8 +214,8 @@ async function renderPersonaAndHistory(personaId) {
   });
 
   const history = await listHistoryForPersona(personaId);
-  renderHistory(history);
-  await renderInsights(personaId);
+  renderHistoryTab(history, historyDeps);
+  await renderInsights(personaId, insightsDeps);
 
   if (saveZipBtn) {
     saveZipBtn.disabled = !history.length;
@@ -209,387 +241,6 @@ function renderPersonaName(name, options = {}) {
   personaNameInputEl.disabled = disabled;
   personaNameInputEl.placeholder = placeholder;
   personaNameInputEl.value = name;
-}
-
-/**
- * @param {HistoryRecord[]} history
- */
-function renderHistory(history) {
-  if (!historyListEl || !emptyStateEl) {
-    return;
-  }
-  historyListEl.innerHTML = "";
-
-  if (history.length === 0) {
-    renderEmpty(true);
-    return;
-  }
-
-  renderEmpty(false);
-
-  history.forEach((entry) => {
-    const li = document.createElement("li");
-    li.className = "history-item";
-
-    const meta = document.createElement("div");
-    meta.className = "history-meta";
-
-    const title = document.createElement("p");
-    title.className = "history-title";
-    title.textContent = entry.title || entry.url;
-    meta.appendChild(title);
-
-    const link = document.createElement("a");
-    link.className = "history-link";
-    link.href = entry.url;
-    link.target = "_blank";
-    link.rel = "noreferrer";
-    link.textContent = entry.url;
-    meta.appendChild(link);
-
-    const header = document.createElement("div");
-    header.style.display = "flex";
-    header.style.gap = "12px";
-    header.style.alignItems = "center";
-
-    const actions = document.createElement("div");
-    actions.className = "history-actions";
-
-    const viewBtn = document.createElement("button");
-    viewBtn.className = "delete-btn";
-    viewBtn.type = "button";
-    viewBtn.textContent = "View snapshot";
-    viewBtn.style.color = "#0f172a";
-    viewBtn.style.borderColor = "#e2e8f0";
-    viewBtn.style.background = "#fff";
-
-    const container = document.createElement("div");
-    container.style.width = "100%";
-
-    viewBtn.addEventListener("click", async () => {
-      const existing = container.querySelector("iframe");
-      if (existing) {
-        existing.remove();
-        viewBtn.textContent = "View snapshot";
-        return;
-      }
-      try {
-        const snapshot = await getPageSnapshot(entry.id);
-        if (!snapshot?.html) {
-          viewBtn.textContent = "No snapshot";
-          return;
-        }
-        const iframe = document.createElement("iframe");
-        iframe.className = "snapshot-frame";
-        iframe.srcdoc = snapshot.html;
-        container.appendChild(iframe);
-        viewBtn.textContent = "Hide snapshot";
-      } catch (error) {
-        log("Failed to load snapshot", error);
-      }
-    });
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "delete-btn";
-    deleteBtn.type = "button";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", async () => {
-      await deleteHistoryEntry(entry.id);
-      await renderPersonaAndHistory(entry.personaId);
-    });
-
-    actions.appendChild(viewBtn);
-    actions.appendChild(deleteBtn);
-    header.appendChild(meta);
-    header.appendChild(actions);
-    li.appendChild(header);
-    li.appendChild(container);
-
-    historyListEl.appendChild(li);
-  });
-}
-
-/**
- * @param {boolean} isEmpty
- */
-function renderEmpty(isEmpty) {
-  if (!emptyStateEl) {
-    return;
-  }
-  emptyStateEl.hidden = !isEmpty;
-}
-
-/**
- * @param {string | undefined} personaId
- */
-async function renderInsights(personaId) {
-  if (!insightsRowsEl || !insightsEmptyEl) {
-    return;
-  }
-  insightsRowsEl.innerHTML = "";
-  if (!personaId) {
-    insightsEmptyEl.hidden = false;
-    return;
-  }
-
-  const insights = await listInsightsForPersona(personaId);
-  insightsEmptyEl.hidden = insights.length > 0;
-  insights.forEach((insight, index) => {
-    const rowEl = buildInsightRow(insight, personaId, false);
-    rowEl.dataset.index = String(index);
-    insightsRowsEl.appendChild(rowEl);
-  });
-}
-
-/**
- * @param {import("./types").InsightRecord} insight
- * @param {string} personaId
- * @param {boolean} isPlaceholder
- */
-function buildInsightRow(insight, personaId, isPlaceholder) {
-  const row = document.createElement("div");
-  row.className = "insight-row";
-
-  const grid = document.createElement("div");
-  grid.className = "insights-grid";
-
-  const summaryInput = document.createElement("input");
-  summaryInput.type = "text";
-  summaryInput.placeholder = "Add summary…";
-  summaryInput.value = insight.insight_summary || "";
-
-  const categorySelect = document.createElement("select");
-  populateSelect(categorySelect, CATEGORIES_LIST, "");
-  categorySelect.value = insight.category || categorySelect.value;
-
-  const intentSelect = document.createElement("select");
-  populateSelect(intentSelect, INTENTS_LIST, "");
-  intentSelect.value = insight.intent || intentSelect.value;
-
-  const scoreSelect = document.createElement("select");
-  populateSelect(scoreSelect, ["1", "2", "3", "4", "5"], "");
-  scoreSelect.value = insight.score ? String(insight.score) : scoreSelect.value;
-
-  /**
-   * @param {HTMLElement} el
-   */
-  const attachSave = (el) => {
-    el.addEventListener("change", () => {
-      void handleInsightSave({
-        personaId,
-        insightId: insight.id,
-        elements: { summaryInput, categorySelect, intentSelect, scoreSelect },
-        isPlaceholder,
-        row,
-      });
-    });
-    el.addEventListener("blur", () => {
-      void handleInsightSave({
-        personaId,
-        insightId: insight.id,
-        elements: { summaryInput, categorySelect, intentSelect, scoreSelect },
-        isPlaceholder,
-        row,
-      });
-    });
-  };
-
-  [summaryInput, categorySelect, intentSelect, scoreSelect].forEach(attachSave);
-
-  grid.appendChild(summaryInput);
-  grid.appendChild(categorySelect);
-  grid.appendChild(intentSelect);
-  grid.appendChild(scoreSelect);
-  if (!isPlaceholder) {
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.className = "delete-btn";
-    deleteBtn.addEventListener("click", () => {
-      void handleInsightDelete(personaId, insight.id);
-    });
-    grid.appendChild(deleteBtn);
-  } else {
-    grid.appendChild(document.createElement("div"));
-  }
-
-  row.appendChild(grid);
-
-  return row;
-}
-
-function setupInsightAddForm() {
-  if (
-    !insightAddSummary ||
-    !insightAddCategory ||
-    !insightAddIntent ||
-    !insightAddScore
-  ) {
-    return;
-  }
-  populateSelect(insightAddCategory, CATEGORIES_LIST, "");
-  populateSelect(insightAddIntent, INTENTS_LIST, "");
-  populateSelect(insightAddScore, ["1", "2", "3", "4", "5"], "");
-
-  insightAddBtn?.addEventListener("click", () => {
-    void handleAddInsight();
-  });
-  insightAddSummary.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      void handleAddInsight();
-    }
-  });
-}
-
-/**
- * @param {HTMLSelectElement} select
- * @param {string[]} values
- * @param {string} placeholder
- */
-function populateSelect(select, values, placeholder) {
-  if (placeholder !== undefined) {
-    select.innerHTML = `<option value="">${placeholder}</option>`;
-  } else {
-    select.innerHTML = "";
-  }
-  values.forEach((value) => {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = value;
-    select.appendChild(option);
-  });
-  if (!placeholder && values.length > 0) {
-    select.value = values[0];
-  }
-}
-
-async function handleAddInsight() {
-  if (
-    !insightAddSummary ||
-    !insightAddCategory ||
-    !insightAddIntent ||
-    !insightAddScore
-  ) {
-    return;
-  }
-  const personaId = await getActivePersonaId();
-  if (!personaId) {
-    showNotification("Select a persona first");
-    return;
-  }
-  const summary = insightAddSummary.value.trim();
-  const category = insightAddCategory.value || CATEGORIES_LIST[0];
-  const intent = insightAddIntent.value || INTENTS_LIST[0];
-  const scoreValue = insightAddScore.value || "1";
-  const score = Number(scoreValue);
-
-  if (!summary || !category || !intent || !scoreValue) {
-    showNotification("Fill all fields to add an insight");
-    return;
-  }
-
-  try {
-    await addInsight(personaId, {
-      insight_summary: summary,
-      category,
-      intent,
-      score,
-      is_deleted: false,
-      updated_at: Date.now(),
-    });
-    insightAddSummary.value = "";
-    populateSelect(insightAddCategory, CATEGORIES_LIST, "");
-    populateSelect(insightAddIntent, INTENTS_LIST, "");
-    populateSelect(insightAddScore, ["1", "2", "3", "4", "5"], "");
-    insightAddSummary.focus();
-    showNotification("Insight added");
-    await renderInsights(personaId);
-  } catch (error) {
-    log("Failed to add insight", error);
-    showNotification("Save failed");
-  }
-}
-
-/**
- * @param {string} personaId
- * @param {string} insightId
- */
-async function handleInsightDelete(personaId, insightId) {
-  try {
-    await deleteInsight(insightId);
-    await renderInsights(personaId);
-  } catch (error) {
-    log("Failed to delete insight", error);
-  }
-}
-
-/**
- * @param {{
- *  personaId: string;
- *  insightId: string;
- *  elements: {
- *    summaryInput: HTMLInputElement;
- *    categorySelect: HTMLSelectElement;
- *    intentSelect: HTMLSelectElement;
- *    scoreSelect: HTMLSelectElement;
- *  };
- *  isPlaceholder: boolean;
- *  row: HTMLElement;
- * }} params
- */
-async function handleInsightSave({
-  personaId,
-  insightId,
-  elements,
-  isPlaceholder,
-  row,
-}) {
-  const statusEl = row.querySelector(".insight-status");
-  const summary = elements.summaryInput.value.trim();
-  const category = elements.categorySelect.value;
-  const intent = elements.intentSelect.value;
-  const scoreValue = elements.scoreSelect.value;
-  const score = Number(scoreValue);
-
-  const hasAnyValue = summary || category || intent || scoreValue;
-  const isComplete = summary && category && intent && scoreValue;
-
-  if (!hasAnyValue) {
-    return;
-  }
-  if (!isComplete) {
-    if (statusEl) statusEl.textContent = "Fill all fields to save";
-    return;
-  }
-
-  if (statusEl) statusEl.textContent = "Saving…";
-  try {
-    if (isPlaceholder) {
-      await addInsight(personaId, {
-        insight_summary: summary,
-        category,
-        intent,
-        score,
-        is_deleted: false,
-        updated_at: Date.now(),
-      });
-    } else {
-      await updateInsight(insightId, {
-        insight_summary: summary,
-        category,
-        intent,
-        score,
-        is_deleted: false,
-        updated_at: Date.now(),
-      });
-    }
-    if (statusEl) statusEl.textContent = "Saved";
-    await renderInsights(personaId);
-  } catch (error) {
-    log("Failed to save insight", error);
-    if (statusEl) statusEl.textContent = "Save failed";
-  }
 }
 
 /**
