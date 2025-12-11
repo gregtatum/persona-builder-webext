@@ -55,7 +55,10 @@ describe("zip-persona roundtrip", () => {
 
     const parsed = await parsePersonaZip(zipBlob);
 
-    expect(parsed.persona?.name).toBe(persona.name);
+    expect(parsed.persona).toEqual({
+      name: persona.name,
+      createdAt: persona.createdAt,
+    });
     expect(parsed.history).toHaveLength(2);
     const imported = parsed.history[0];
     const importedNested = parsed.history[1];
@@ -75,19 +78,6 @@ describe("zip-persona roundtrip", () => {
     expect(importedNested.snapshotHtml).toBe("<p>nested</p>");
     expect(parsed.insights).toEqual([
       {
-        id: "insight-1",
-        insight_summary: "Summary",
-        category: "Category",
-        intent: "Intent",
-        score: 3,
-        updated_at: 1700000000000,
-        is_deleted: false,
-      },
-    ]);
-    expect(parsed.insights[0].personaId).toBeUndefined();
-    expect(parsed.insights).toEqual([
-      {
-        id: "insight-1",
         insight_summary: "Summary",
         category: "Category",
         intent: "Intent",
@@ -143,7 +133,10 @@ describe("buildPersonaJson", () => {
     const json = buildPersonaJson(persona, [{ entry: historyEntry }], insights);
     const parsed = JSON.parse(json);
 
-    expect(parsed.persona).toEqual(persona);
+    expect(parsed.persona).toEqual({
+      name: persona.name,
+      createdAt: persona.createdAt,
+    });
     expect(parsed.history).toHaveLength(1);
     expect(parsed.history[0]).toEqual({
       url: historyEntry.url,
@@ -156,7 +149,6 @@ describe("buildPersonaJson", () => {
     expect(parsed.history[0].id).toBeUndefined();
     expect(parsed.insights).toEqual([
       {
-        id: "insight-abc",
         insight_summary: "Summary",
         category: "Category",
         intent: "Intent",

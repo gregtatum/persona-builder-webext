@@ -49,8 +49,9 @@ export function sanitizeSegment(value) {
  * @param {import("./types").InsightRecord[]} [insights]
  */
 export function buildPersonaExport(persona, historySnapshots, insights = []) {
+  const { id: _omitPersonaId, ...personaWithoutId } = persona;
   return {
-    persona,
+    persona: personaWithoutId,
     history: historySnapshots.map(({ entry }) => {
       const { personaId: _omitPersonaId, id: _omitId, ...rest } = entry;
       return {
@@ -59,7 +60,7 @@ export function buildPersonaExport(persona, historySnapshots, insights = []) {
       };
     }),
     insights: insights.map((insight) => {
-      const { personaId: _omitPersonaId, ...rest } = insight;
+      const { personaId: _omitPersonaId, id: _omitId, ...rest } = insight;
       return rest;
     }),
   };
