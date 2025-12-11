@@ -11,6 +11,12 @@ export FIREFOX_BIN="/Applications/Firefox.app/Contents/MacOS/firefox"
 npm run start
 ```
 
-## Dev Commands
+## Dev commands
 
-See `npm run`
+| Command | Description |
+| --- | --- |
+| `npm run start` | Launch the extension with `web-ext run` (requires `FIREFOX_BIN` path set) |
+| `npm run lint` | Lint the extension with `web-ext lint` |
+| `npm run test` | Run Jest tests |
+| `npm run ts` | Type-check with TypeScript |
+| `npm run release` | Bump version, sync manifest, sign, tag, and publish release (needs AMO credentials) |
