@@ -3,19 +3,24 @@
 set -euo pipefail
 
 CONFIG_PATH="./.web-ext-config.mjs"
-extra_args=()
 
 if [[ -n "${FIREFOX_BIN:-}" ]]; then
   echo "Using Firefox from FIREFOX_BIN=${FIREFOX_BIN}"
-  extra_args+=(--firefox "$FIREFOX_BIN")
+  web-ext run \
+    --browser-console \
+    --keep-profile-changes \
+    --firefox-profile ./profile \
+    --profile-create-if-missing \
+    --watch-ignored "**/profile" \
+    --config "$CONFIG_PATH" \
+    --firefox "$FIREFOX_BIN"
 else
   echo "Using default Firefox"
+  web-ext run \
+    --browser-console \
+    --keep-profile-changes \
+    --firefox-profile ./profile \
+    --profile-create-if-missing \
+    --watch-ignored "**/profile" \
+    --config "$CONFIG_PATH"
 fi
-
-web-ext run \
-  --browser-console \
-  --keep-profile-changes \
-  --firefox-profile ./profile \
-  --profile-create-if-missing \
-  --watch-ignored "**/profile" \
-  --config "$CONFIG_PATH" "${extra_args[@]}"
