@@ -49,6 +49,12 @@ const personaNameInputEl = /** @type {HTMLInputElement | null} */ (
 const personaSelectEl = /** @type {HTMLSelectElement | null} */ (
   document.getElementById("persona-select")
 );
+const importZipBtn = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("import-zip-btn")
+);
+const importZipInput = /** @type {HTMLInputElement | null} */ (
+  document.getElementById("import-zip-input")
+);
 const saveZipBtn = /** @type {HTMLButtonElement | null} */ (
   document.getElementById("save-zip-btn")
 );
@@ -111,6 +117,19 @@ async function load() {
       const selectedId = personaSelectEl.value;
       await setActivePersonaId(selectedId);
       await renderPersonaAndHistory(selectedId);
+    });
+  }
+
+  if (importZipBtn && importZipInput) {
+    importZipBtn.addEventListener("click", () => {
+      importZipInput.value = "";
+      importZipInput.click();
+    });
+    importZipInput.addEventListener("change", () => {
+      const file = importZipInput.files?.[0];
+      if (file) {
+        void importPersonaZip(file);
+      }
     });
   }
 
