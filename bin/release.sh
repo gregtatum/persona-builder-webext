@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+# Do a release of the web extension by doing a major bump of the tag, and then pushing
+# all of the release assets to GitHub.
+
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -23,6 +27,17 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
+if [[ -z "${AMO_JWT_ISSUER:-}" || -z "${AMO_JWT_SECRET:-}" ]]; then
+  cat <<'EOF'
+AMO credentials are required to sign the extension.
+Get API keys from: https://addons.mozilla.org/en-US/developers/addon/api/key/
+Then export them before running the release:
+  export AMO_JWT_ISSUER=your_api_key
+  export AMO_JWT_SECRET=your_api_secret
+EOF
+  exit 1
+fi
+
 echo "Bumping package version (major)..."
 npm version major --no-git-tag-version >/dev/null
 
@@ -33,9 +48,15 @@ if git rev-parse "$TAG" >/dev/null 2>&1; then
   echo "Tag $TAG already exists. Delete or set TAG=<new> to override." >&2
   exit 1
 fi
+export AMO_JWT_ISSUER AMO_JWT_SECRET
 
-echo "Building extension bundle..."
-npx web-ext build --overwrite-dest --config ./.web-ext-config.mjs
+echo "Signing extension (unlisted channel)..."
+npx web-ext sign \
+  --channel unlisted \
+  --artifacts-dir "$ROOT_DIR/dist" \
+  --api-key "$AMO_JWT_ISSUER" \
+  --api-secret "$AMO_JWT_SECRET" \
+  --config ./.web-ext-config.mjs
 
 ARTIFACT="$(ls -t "$ROOT_DIR"/dist/*.{xpi,zip} 2>/dev/null | head -n 1 || true)"
 if [[ -z "$ARTIFACT" ]]; then
