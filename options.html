@@ -111,7 +111,7 @@
       }
       .insights-grid {
         display: grid;
-        grid-template-columns: 1.2fr 0.9fr 0.9fr 0.5fr;
+        grid-template-columns: 1.3fr 1fr 1fr 0.5fr 0.6fr;
         gap: 8px;
         align-items: center;
       }
@@ -120,18 +120,40 @@
         color: #0f172a;
         padding: 8px 0 4px;
       }
+      .insights-add {
+        border: 2px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 10px;
+        background: #f8fafc;
+        margin-bottom: 12px;
+      }
       .insight-row {
         border-top: 1px solid #e2e8f0;
         padding: 8px 0;
       }
       .insight-row input,
-      .insight-row select {
+      .insight-row select,
+      .insights-add input,
+      .insights-add select {
         width: 100%;
         box-sizing: border-box;
         padding: 8px 10px;
         border: 1px solid #cbd5e1;
         border-radius: 6px;
         background: #fff;
+      }
+      .insight-add-btn {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #2563eb;
+        background: #2563eb;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .insight-add-btn:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
       }
       .insight-status {
         font-size: 12px;
@@ -298,9 +320,38 @@
           <div>Category</div>
           <div>Intent</div>
           <div>Score</div>
+          <div>Actions</div>
+        </div>
+        <div class="insights-add">
+          <div class="insights-grid">
+            <input
+              id="insight-add-summary"
+              type="text"
+              placeholder="Add summary…"
+              aria-label="Insight summary"
+            />
+            <select id="insight-add-category" aria-label="Insight category">
+              <option value="">Select category</option>
+            </select>
+            <select id="insight-add-intent" aria-label="Insight intent">
+              <option value="">Select intent</option>
+            </select>
+            <select id="insight-add-score" aria-label="Insight score">
+              <option value="">Score</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+            <button id="insight-add-btn" type="button" class="insight-add-btn">
+              Add insight
+            </button>
+          </div>
+          <div id="insight-add-status" class="insight-status"></div>
         </div>
         <div id="insights-rows"></div>
-        <p id="insights-empty" class="empty" hidden>No insights yet. Add one below.</p>
+        <p id="insights-empty" class="empty" hidden>No insights yet.</p>
       </div>
     </section>
     <script type="module" src="options.mjs"></script>

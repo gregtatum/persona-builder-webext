@@ -62,6 +62,22 @@ const insightsTabBtn = /** @type {HTMLButtonElement | null} */ (
 );
 const historyPanel = document.getElementById("panel-history");
 const insightsPanel = document.getElementById("panel-insights");
+const insightAddSummary = /** @type {HTMLInputElement | null} */ (
+  document.getElementById("insight-add-summary")
+);
+const insightAddCategory = /** @type {HTMLSelectElement | null} */ (
+  document.getElementById("insight-add-category")
+);
+const insightAddIntent = /** @type {HTMLSelectElement | null} */ (
+  document.getElementById("insight-add-intent")
+);
+const insightAddScore = /** @type {HTMLSelectElement | null} */ (
+  document.getElementById("insight-add-score")
+);
+const insightAddBtn = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("insight-add-btn")
+);
+const insightAddStatus = document.getElementById("insight-add-status");
 const dropOverlay = document.getElementById("drop-overlay");
 const notificationEl = document.getElementById("notification");
 
@@ -116,6 +132,8 @@ async function load() {
     const current = await getActivePersonaId();
     await renderPersonaAndHistory(current);
   };
+
+  setupInsightAddForm();
 
   setActiveTab("history");
 
@@ -316,27 +334,11 @@ async function renderInsights(personaId) {
 
   const insights = await listInsightsForPersona(personaId);
   insightsEmptyEl.hidden = insights.length > 0;
-  const rows = [...insights, createBlankInsightRow()];
-
-  rows.forEach((insight, index) => {
-    const isPlaceholder = !insight.id;
-    const rowEl = buildInsightRow(insight, personaId, isPlaceholder);
+  insights.forEach((insight, index) => {
+    const rowEl = buildInsightRow(insight, personaId, false);
     rowEl.dataset.index = String(index);
     insightsRowsEl.appendChild(rowEl);
   });
-}
-
-function createBlankInsightRow() {
-  return {
-    id: "",
-    insight_summary: "",
-    category: "",
-    intent: "",
-    score: 0,
-    updated_at: Date.now(),
-    is_deleted: false,
-    personaId: "",
-  };
 }
 
 /**
@@ -416,14 +418,101 @@ function buildInsightRow(insight, personaId, isPlaceholder) {
   grid.appendChild(categorySelect);
   grid.appendChild(intentSelect);
   grid.appendChild(scoreSelect);
-  row.appendChild(grid);
-
   const status = document.createElement("div");
   status.className = "insight-status";
   status.textContent = isPlaceholder ? "" : "Saved";
-  row.appendChild(status);
+  grid.appendChild(status);
+
+  row.appendChild(grid);
 
   return row;
+}
+
+function setupInsightAddForm() {
+  if (
+    !insightAddSummary ||
+    !insightAddCategory ||
+    !insightAddIntent ||
+    !insightAddScore
+  ) {
+    return;
+  }
+  populateSelect(insightAddCategory, CATEGORIES_LIST, "Select category");
+  populateSelect(insightAddIntent, INTENTS_LIST, "Select intent");
+
+  insightAddBtn?.addEventListener("click", () => {
+    void handleAddInsight();
+  });
+  insightAddSummary.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void handleAddInsight();
+    }
+  });
+}
+
+/**
+ * @param {HTMLSelectElement} select
+ * @param {string[]} values
+ * @param {string} placeholder
+ */
+function populateSelect(select, values, placeholder) {
+  select.innerHTML = `<option value="">${placeholder}</option>`;
+  values.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+}
+
+async function handleAddInsight() {
+  if (
+    !insightAddSummary ||
+    !insightAddCategory ||
+    !insightAddIntent ||
+    !insightAddScore
+  ) {
+    return;
+  }
+  const statusEl = insightAddStatus;
+  const personaId = await getActivePersonaId();
+  if (!personaId) {
+    if (statusEl) statusEl.textContent = "Select a persona first";
+    return;
+  }
+  const summary = insightAddSummary.value.trim();
+  const category = insightAddCategory.value;
+  const intent = insightAddIntent.value;
+  const scoreValue = insightAddScore.value;
+  const score = Number(scoreValue);
+
+  if (!summary || !category || !intent || !scoreValue) {
+    if (statusEl) statusEl.textContent = "Fill all fields to add an insight";
+    return;
+  }
+
+  if (statusEl) statusEl.textContent = "Saving…";
+  try {
+    await addInsight(personaId, {
+      insight_summary: summary,
+      category,
+      intent,
+      score,
+      is_deleted: false,
+      updated_at: Date.now(),
+    });
+    insightAddSummary.value = "";
+    insightAddCategory.value = "";
+    insightAddIntent.value = "";
+    insightAddScore.value = "";
+    insightAddSummary.focus();
+    if (statusEl) statusEl.textContent = "Saved";
+    await renderInsights(personaId);
+  } catch (error) {
+    log("Failed to add insight", error);
+    if (statusEl) statusEl.textContent = "Save failed";
+  }
 }
 
 /**
