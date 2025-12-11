@@ -39,7 +39,7 @@ const personaNameInput = getElement("persona-name", HTMLInputElement);
 const addPersonaBtn = getElement("add-persona", HTMLButtonElement);
 const savePersonaBtn = getElement("save-persona", HTMLButtonElement);
 const captureBtn = getElement("capture", HTMLButtonElement);
-const openOptionsLink = getElement("open-options", HTMLAnchorElement);
+const openOptionsBtn = getElement("open-options", HTMLButtonElement);
 
 const BADGE_COLOR = "#2563eb";
 
@@ -166,8 +166,7 @@ personaSelect.addEventListener("change", () => {
   }
   log("Persona switched", persona);
 });
-openOptionsLink.addEventListener("click", (event) => {
-  event.preventDefault();
+openOptionsBtn.addEventListener("click", () => {
   void browser.runtime.openOptionsPage();
 });
 

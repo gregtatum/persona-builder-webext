@@ -5,23 +5,24 @@
     <title>Persona Builder</title>
     <style>
       body {
-        width: 320px;
-        font: 14px/1.4 sans-serif;
-        padding: 12px;
+        width: 340px;
+        font: 14px/1.5 "Inter", system-ui, -apple-system, sans-serif;
+        padding: 14px;
         margin: 0;
-        background: #f8f9fb;
-        color: #1f2933;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        color: #0f172a;
       }
 
       h1 {
         font-size: 16px;
-        margin: 0 0 8px;
+        margin: 0 0 10px;
+        letter-spacing: 0.01em;
       }
 
       .stack {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
       }
 
       label {
@@ -33,32 +34,53 @@
       select,
       input,
       button {
-        width: 100%;
         box-sizing: border-box;
         font: inherit;
       }
 
       select,
       input {
-        padding: 6px 8px;
+        padding: 8px 10px;
+        border: 1px solid #94a3b8;
+        border-radius: 8px;
+        background: #fff;
+        width: 100%;
       }
 
       button {
-        padding: 8px 10px;
+        padding: 9px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 120ms ease;
+      }
+
+      button.primary {
         background: #2563eb;
         color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
+        border-color: #1d4ed8;
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.18);
+      }
+
+      button.primary:hover {
+        background: #1d4ed8;
       }
 
       button.secondary {
-        background: #111827;
+        background: #fff;
+        color: #0f172a;
+        border-color: #94a3b8;
+      }
+
+      button.secondary:hover {
+        border-color: #475569;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
       }
 
       .row {
         display: flex;
         gap: 8px;
+        align-items: center;
       }
 
       .row > input {
@@ -73,16 +95,21 @@
         display: none;
       }
 
-      .options-link {
-        display: inline-block;
-        margin-top: 10px;
-        font-size: 13px;
-        color: #2563eb;
-        text-decoration: none;
+      .toolbar {
+        display: flex;
+        gap: 8px;
       }
 
-      .options-link:hover {
-        text-decoration: underline;
+      .toolbar button {
+        flex: 1;
+      }
+
+      .inset {
+        border: 1px solid #94a3b8;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
       }
     </style>
   </head>
@@ -93,20 +120,21 @@
         <select id="persona-select"></select>
       </div>
 
-      <div class="row">
-        <button id="add-persona">Add Persona</button>
-        <button id="capture">Capture Page</button>
+      <div class="toolbar">
+        <button id="add-persona" class="secondary">Add Persona</button>
+        <button id="open-options" class="secondary">View Personas</button>
       </div>
 
-      <div id="persona-form" class="hidden">
+      <div id="persona-form" class="inset hidden">
         <label for="persona-name">New persona name</label>
         <div class="row">
-          <input id="persona-name" type="text" placeholder="e.g. Research notes" />
-          <button id="save-persona">Save Persona</button>
+          <input id="persona-name" type="text" placeholder="e.g. Researcher" />
+          <button id="save-persona" class="primary">Save</button>
         </div>
       </div>
+
+      <button id="capture" class="primary">Capture Page</button>
     </div>
-    <a class="options-link" id="open-options" href="#">Open settings</a>
     <script type="module" src="popup.mjs"></script>
   </body>
 </html>
