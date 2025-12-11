@@ -13,6 +13,11 @@ command -v git >/dev/null 2>&1 || {
   exit 1
 }
 
+if ! gh auth status >/dev/null 2>&1; then
+  echo "GitHub CLI is not authenticated. To get started with GitHub CLI, please run:  gh auth login" >&2
+  exit 1
+fi
+
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "Working tree must be clean before releasing. Commit or stash changes first." >&2
   exit 1
