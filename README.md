@@ -8,6 +8,41 @@ Build a Firefox Persona with browser history, and snapshots of HTML.
 
 You can view all of the personas you have saved from the addon's dedicated personas page. Click the "View Personas" button. From there you can manually edit the history, insights, and export a zip file of the persona. Zip files can also be loaded in by dragging it onto the options page, or importing it.
 
+## Using the persona zip file
+
+A persona is a data structure that represents a user and their associated browsing
+history. It can be used to synthesize a realistic Firefox profile. This JSON file
+is specified with this Persona type.
+
+The file structure for the zip that gets exported is as follows:
+
+```
+ Persona-DIYer.zip
+ ├── persona.json
+ └── snapshot
+   ├── example-blog.com
+   │   ├── index.html
+   │   ├── writing_2021_encoding-text-utf-32-utf-16-unicode.html
+   │   ├── writing_2021_encoding-text-utf-8-unicode.html
+   │   └── writing_2024_translations.html
+   └── www.homedepot.com
+       ├── c_appliance-sales.html
+       └── index.html
+```
+
+The profile can be further augmented with other data outside of the addon as long as
+it follows the [src/@types/persona.d.ts](./src/@types/persona.d.ts) structure. For
+instance an existing history dataset could be added without the webpage snapshots.
+
+```
+export interface Persona {
+  persona: PersonaDetails;
+  history: PersonaHistory[];
+  insights: PersonaInsights[];
+}
+```
+
+
 ## Developing this addon
 
 To get started run the following:
