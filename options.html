@@ -127,6 +127,9 @@
         background: #f8fafc;
         margin-bottom: 12px;
       }
+      #insights-rows {
+        padding: 0 10px;
+      }
       .insight-row {
         border-top: 1px solid #e2e8f0;
         padding: 8px 0;
@@ -155,10 +158,17 @@
         background: #1d4ed8;
         border-color: #1d4ed8;
       }
-      .insight-status {
-        font-size: 12px;
-        color: #475569;
-        min-height: 16px;
+      .insight-row .delete-btn {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #b91c1c;
+        cursor: pointer;
+      }
+      .insight-row .delete-btn:hover {
+        border-color: #b91c1c;
+        background: #fef2f2;
       }
       .history-link:hover {
         text-decoration: underline;
@@ -337,7 +347,6 @@
               Add insight
             </button>
           </div>
-          <div id="insight-add-status" class="insight-status"></div>
         </div>
         <div id="insights-rows"></div>
         <p id="insights-empty" class="empty" hidden>No insights yet.</p>

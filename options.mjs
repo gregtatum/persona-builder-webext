@@ -78,7 +78,6 @@ const insightAddScore = /** @type {HTMLSelectElement | null} */ (
 const insightAddBtn = /** @type {HTMLButtonElement | null} */ (
   document.getElementById("insight-add-btn")
 );
-const insightAddStatus = document.getElementById("insight-add-status");
 const dropOverlay = document.getElementById("drop-overlay");
 const notificationEl = document.getElementById("notification");
 
@@ -401,8 +400,6 @@ function buildInsightRow(insight, personaId, isPlaceholder) {
   grid.appendChild(categorySelect);
   grid.appendChild(intentSelect);
   grid.appendChild(scoreSelect);
-  const actions = document.createElement("div");
-  actions.className = "insight-status";
   if (!isPlaceholder) {
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
@@ -411,9 +408,10 @@ function buildInsightRow(insight, personaId, isPlaceholder) {
     deleteBtn.addEventListener("click", () => {
       void handleInsightDelete(personaId, insight.id);
     });
-    actions.appendChild(deleteBtn);
+    grid.appendChild(deleteBtn);
+  } else {
+    grid.appendChild(document.createElement("div"));
   }
-  grid.appendChild(actions);
 
   row.appendChild(grid);
 
@@ -475,10 +473,9 @@ async function handleAddInsight() {
   ) {
     return;
   }
-  const statusEl = insightAddStatus;
   const personaId = await getActivePersonaId();
   if (!personaId) {
-    if (statusEl) statusEl.textContent = "Select a persona first";
+    showNotification("Select a persona first");
     return;
   }
   const summary = insightAddSummary.value.trim();
@@ -488,11 +485,10 @@ async function handleAddInsight() {
   const score = Number(scoreValue);
 
   if (!summary || !category || !intent || !scoreValue) {
-    if (statusEl) statusEl.textContent = "Fill all fields to add an insight";
+    showNotification("Fill all fields to add an insight");
     return;
   }
 
-  if (statusEl) statusEl.textContent = "Saving…";
   try {
     await addInsight(personaId, {
       insight_summary: summary,
@@ -507,11 +503,11 @@ async function handleAddInsight() {
     populateSelect(insightAddIntent, INTENTS_LIST, "");
     populateSelect(insightAddScore, ["1", "2", "3", "4", "5"], "");
     insightAddSummary.focus();
-    if (statusEl) statusEl.textContent = "Saved";
+    showNotification("Insight added");
     await renderInsights(personaId);
   } catch (error) {
     log("Failed to add insight", error);
-    if (statusEl) statusEl.textContent = "Save failed";
+    showNotification("Save failed");
   }
 }
 
