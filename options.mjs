@@ -48,6 +48,14 @@ const saveZipBtn = /** @type {HTMLButtonElement | null} */ (
 const deletePersonaBtn = /** @type {HTMLButtonElement | null} */ (
   document.getElementById("delete-persona-btn")
 );
+const historyTabBtn = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("tab-history")
+);
+const insightsTabBtn = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("tab-insights")
+);
+const historyPanel = document.getElementById("panel-history");
+const insightsPanel = document.getElementById("panel-insights");
 const dropOverlay = document.getElementById("drop-overlay");
 const notificationEl = document.getElementById("notification");
 
@@ -77,6 +85,9 @@ async function load() {
     );
   }
 
+  historyTabBtn?.addEventListener("click", () => setActiveTab("history"));
+  insightsTabBtn?.addEventListener("click", () => setActiveTab("insights"));
+
   if (personaNameInputEl) {
     personaNameInputEl.addEventListener("change", () => {
       void handleRenamePersona();
@@ -99,6 +110,8 @@ async function load() {
     const current = await getActivePersonaId();
     await renderPersonaAndHistory(current);
   };
+
+  setActiveTab("history");
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
@@ -278,6 +291,22 @@ function renderEmpty(isEmpty) {
     return;
   }
   emptyStateEl.hidden = !isEmpty;
+}
+
+/**
+ * @param {"history" | "insights"} tab
+ */
+function setActiveTab(tab) {
+  if (!historyTabBtn || !insightsTabBtn || !historyPanel || !insightsPanel) {
+    return;
+  }
+  const isHistory = tab === "history";
+  historyTabBtn.classList.toggle("active", isHistory);
+  insightsTabBtn.classList.toggle("active", !isHistory);
+  historyTabBtn.setAttribute("aria-selected", String(isHistory));
+  insightsTabBtn.setAttribute("aria-selected", String(!isHistory));
+  historyPanel.classList.toggle("active", isHistory);
+  insightsPanel.classList.toggle("active", !isHistory);
 }
 
 async function handleRenamePersona() {
