@@ -50,10 +50,13 @@ export function sanitizeSegment(value) {
 export function buildPersonaExport(persona, historySnapshots) {
   return {
     persona,
-    history: historySnapshots.map(({ entry }) => ({
-      ...entry,
-      snapshotPath: `./${buildSnapshotPath(entry.url)}`,
-    })),
+    history: historySnapshots.map(({ entry }) => {
+      const { personaId: _omitPersonaId, id: _omitId, ...rest } = entry;
+      return {
+        ...rest,
+        snapshotPath: `./${buildSnapshotPath(entry.url)}`,
+      };
+    }),
   };
 }
 

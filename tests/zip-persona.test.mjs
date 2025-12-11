@@ -47,11 +47,15 @@ describe("zip-persona roundtrip", () => {
     expect(imported.entry.snapshotPath).toBe(
       `./${buildSnapshotPath(historyEntry.url)}`
     );
+    expect(imported.entry.personaId).toBeUndefined();
+    expect(imported.entry.id).toBeUndefined();
     expect(imported.snapshotHtml).toBe(html);
     expect(importedNested.entry.url).toBe(nestedEntry.url);
     expect(importedNested.entry.snapshotPath).toBe(
       `./${buildSnapshotPath(nestedEntry.url)}`
     );
+    expect(importedNested.entry.personaId).toBeUndefined();
+    expect(importedNested.entry.id).toBeUndefined();
     expect(importedNested.snapshotHtml).toBe("<p>nested</p>");
 
     const tree = await zipTree(zipBlob);
@@ -90,8 +94,13 @@ describe("buildPersonaJson", () => {
     expect(parsed.persona).toEqual(persona);
     expect(parsed.history).toHaveLength(1);
     expect(parsed.history[0]).toEqual({
-      ...historyEntry,
+      url: historyEntry.url,
+      title: historyEntry.title,
+      description: historyEntry.description,
+      visitedAt: historyEntry.visitedAt,
       snapshotPath: `./${buildSnapshotPath(historyEntry.url)}`,
     });
+    expect(parsed.history[0].personaId).toBeUndefined();
+    expect(parsed.history[0].id).toBeUndefined();
   });
 });
