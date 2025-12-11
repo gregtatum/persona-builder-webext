@@ -339,6 +339,37 @@ export async function addInsight(personaId, insight) {
 }
 
 /**
+ * Update an insight by id.
+ * @param {string} insightId
+ * @param {Partial<import("./types").InsightInput>} updates
+ * @returns {Promise<import("./types").InsightRecord>}
+ */
+export async function updateInsight(insightId, updates) {
+  const tx = await transaction("readwrite", ["insights"]);
+  const store = tx.objectStore("insights");
+  const current = await /** @type {Promise<import("./types").InsightRecord | undefined>} */ (
+    new Promise((resolve, reject) => {
+      const req = store.get(insightId);
+      req.onerror = () => reject(req.error || new Error("get insight failed"));
+      req.onsuccess = () =>
+        resolve(/** @type {import("./types").InsightRecord | undefined} */ (req.result));
+    })
+  );
+  if (!current) {
+    tx.commit?.();
+    throw new Error(`Insight ${insightId} not found`);
+  }
+  const next = {
+    ...current,
+    ...updates,
+    updated_at: updates.updated_at || Date.now()
+  };
+  await put(store, next);
+  tx.commit?.();
+  return next;
+}
+
+/**
  * List insights for a persona ordered by updated_at descending.
  * @param {string} personaId
  * @returns {Promise<import("./types").InsightRecord[]>}

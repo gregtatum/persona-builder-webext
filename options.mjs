@@ -18,6 +18,9 @@ import {
   addHistoryEntry,
   addPageSnapshot,
   updatePersonaName,
+  addInsight,
+  listInsightsForPersona,
+  updateInsight,
 } from "./persona-db.mjs";
 import {
   buildPersonaZip,
@@ -25,6 +28,7 @@ import {
   buildSnapshotPath,
   sanitizeSegment,
 } from "./zip-persona.mjs";
+import { CATEGORIES_LIST, INTENTS_LIST } from "./insights-constants.mjs";
 
 /**
  * @param {any} message
@@ -39,6 +43,8 @@ const personaNameInputEl = /** @type {HTMLInputElement | null} */ (
 );
 const historyListEl = document.getElementById("history-list");
 const emptyStateEl = document.getElementById("empty-state");
+const insightsRowsEl = document.getElementById("insights-rows");
+const insightsEmptyEl = document.getElementById("insights-empty");
 const personaSelectEl = /** @type {HTMLSelectElement | null} */ (
   document.getElementById("persona-select")
 );
@@ -146,6 +152,7 @@ async function renderPersonaAndHistory(personaId) {
   if (!personaId) {
     renderPersonaName("", { disabled: true, placeholder: "No active persona" });
     renderHistory([]);
+    await renderInsights(undefined);
     return;
   }
 
@@ -158,6 +165,7 @@ async function renderPersonaAndHistory(personaId) {
 
   const history = await listHistoryForPersona(personaId);
   renderHistory(history);
+  await renderInsights(personaId);
 
   if (saveZipBtn) {
     saveZipBtn.disabled = !history.length;
@@ -291,6 +299,199 @@ function renderEmpty(isEmpty) {
     return;
   }
   emptyStateEl.hidden = !isEmpty;
+}
+
+/**
+ * @param {string | undefined} personaId
+ */
+async function renderInsights(personaId) {
+  if (!insightsRowsEl || !insightsEmptyEl) {
+    return;
+  }
+  insightsRowsEl.innerHTML = "";
+  if (!personaId) {
+    insightsEmptyEl.hidden = false;
+    return;
+  }
+
+  const insights = await listInsightsForPersona(personaId);
+  insightsEmptyEl.hidden = insights.length > 0;
+  const rows = [...insights, createBlankInsightRow()];
+
+  rows.forEach((insight, index) => {
+    const isPlaceholder = !insight.id;
+    const rowEl = buildInsightRow(insight, personaId, isPlaceholder);
+    rowEl.dataset.index = String(index);
+    insightsRowsEl.appendChild(rowEl);
+  });
+}
+
+function createBlankInsightRow() {
+  return {
+    id: "",
+    insight_summary: "",
+    category: "",
+    intent: "",
+    score: 0,
+    updated_at: Date.now(),
+    is_deleted: false,
+    personaId: "",
+  };
+}
+
+/**
+ * @param {import("./types").InsightRecord} insight
+ * @param {string} personaId
+ * @param {boolean} isPlaceholder
+ */
+function buildInsightRow(insight, personaId, isPlaceholder) {
+  const row = document.createElement("div");
+  row.className = "insight-row";
+
+  const grid = document.createElement("div");
+  grid.className = "insights-grid";
+
+  const summaryInput = document.createElement("input");
+  summaryInput.type = "text";
+  summaryInput.placeholder = "Add summary…";
+  summaryInput.value = insight.insight_summary || "";
+
+  const categorySelect = document.createElement("select");
+  categorySelect.innerHTML = `<option value="">Select category</option>`;
+  CATEGORIES_LIST.forEach((cat) => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    categorySelect.appendChild(option);
+  });
+  categorySelect.value = insight.category || "";
+
+  const intentSelect = document.createElement("select");
+  intentSelect.innerHTML = `<option value="">Select intent</option>`;
+  INTENTS_LIST.forEach((intent) => {
+    const option = document.createElement("option");
+    option.value = intent;
+    option.textContent = intent;
+    intentSelect.appendChild(option);
+  });
+  intentSelect.value = insight.intent || "";
+
+  const scoreSelect = document.createElement("select");
+  scoreSelect.innerHTML = `<option value="">Score</option>`;
+  for (let i = 1; i <= 5; i += 1) {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = String(i);
+    scoreSelect.appendChild(opt);
+  }
+  scoreSelect.value = insight.score ? String(insight.score) : "";
+
+  /**
+   * @param {HTMLElement} el
+   */
+  const attachSave = (el) => {
+    el.addEventListener("change", () => {
+      void handleInsightSave({
+        personaId,
+        insightId: insight.id,
+        elements: { summaryInput, categorySelect, intentSelect, scoreSelect },
+        isPlaceholder,
+        row,
+      });
+    });
+    el.addEventListener("blur", () => {
+      void handleInsightSave({
+        personaId,
+        insightId: insight.id,
+        elements: { summaryInput, categorySelect, intentSelect, scoreSelect },
+        isPlaceholder,
+        row,
+      });
+    });
+  };
+
+  [summaryInput, categorySelect, intentSelect, scoreSelect].forEach(attachSave);
+
+  grid.appendChild(summaryInput);
+  grid.appendChild(categorySelect);
+  grid.appendChild(intentSelect);
+  grid.appendChild(scoreSelect);
+  row.appendChild(grid);
+
+  const status = document.createElement("div");
+  status.className = "insight-status";
+  status.textContent = isPlaceholder ? "" : "Saved";
+  row.appendChild(status);
+
+  return row;
+}
+
+/**
+ * @param {{
+ *  personaId: string;
+ *  insightId: string;
+ *  elements: {
+ *    summaryInput: HTMLInputElement;
+ *    categorySelect: HTMLSelectElement;
+ *    intentSelect: HTMLSelectElement;
+ *    scoreSelect: HTMLSelectElement;
+ *  };
+ *  isPlaceholder: boolean;
+ *  row: HTMLElement;
+ * }} params
+ */
+async function handleInsightSave({
+  personaId,
+  insightId,
+  elements,
+  isPlaceholder,
+  row,
+}) {
+  const statusEl = row.querySelector(".insight-status");
+  const summary = elements.summaryInput.value.trim();
+  const category = elements.categorySelect.value;
+  const intent = elements.intentSelect.value;
+  const scoreValue = elements.scoreSelect.value;
+  const score = Number(scoreValue);
+
+  const hasAnyValue = summary || category || intent || scoreValue;
+  const isComplete = summary && category && intent && scoreValue;
+
+  if (!hasAnyValue) {
+    return;
+  }
+  if (!isComplete) {
+    if (statusEl) statusEl.textContent = "Fill all fields to save";
+    return;
+  }
+
+  if (statusEl) statusEl.textContent = "Saving…";
+  try {
+    if (isPlaceholder) {
+      await addInsight(personaId, {
+        insight_summary: summary,
+        category,
+        intent,
+        score,
+        is_deleted: false,
+        updated_at: Date.now(),
+      });
+    } else {
+      await updateInsight(insightId, {
+        insight_summary: summary,
+        category,
+        intent,
+        score,
+        is_deleted: false,
+        updated_at: Date.now(),
+      });
+    }
+    if (statusEl) statusEl.textContent = "Saved";
+    await renderInsights(personaId);
+  } catch (error) {
+    log("Failed to save insight", error);
+    if (statusEl) statusEl.textContent = "Save failed";
+  }
 }
 
 /**

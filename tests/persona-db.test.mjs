@@ -261,6 +261,29 @@ describe("persona-db", () => {
     ).toBe("Provided summary");
   });
 
+  it("updates an insight", async () => {
+    const persona = await personaDb.addPersona("Insight Update Persona");
+    const insight = await personaDb.addInsight(persona.id, {
+      insight_summary: "Original summary",
+      category: "News",
+      intent: "Communicate / Share",
+      score: 1,
+      updated_at: 1700000000000,
+      is_deleted: false,
+    });
+
+    const updated = await personaDb.updateInsight(insight.id, {
+      insight_summary: "Updated summary",
+      score: 5,
+    });
+
+    expect(updated.insight_summary).toBe("Updated summary");
+    expect(updated.score).toBe(5);
+    expect(updated.personaId).toBe(persona.id);
+    const all = await readAllFromStore("insights");
+    expect(all[0].insight_summary).toBe("Updated summary");
+  });
+
   it("deletes history entries and snapshots", async () => {
     const persona = await personaDb.addPersona("Delete Persona");
     const entry = await personaDb.addHistoryEntry({
