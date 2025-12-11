@@ -8,7 +8,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "ts": "tsc --noEmit",
     "lint": "web-ext lint --config ./.web-ext-config.mjs",
-    "build": "web-ext build --overwrite-dest --config ./.web-ext-config.mjs"
+    "build": "./bin/build"
   },
   "keywords": [],
   "author": "",

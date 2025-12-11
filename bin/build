@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+command -v gh >/dev/null 2>&1 || {
+  echo "gh CLI is required to publish GitHub releases. Install it from https://cli.github.com/." >&2
+  exit 1
+}
+command -v git >/dev/null 2>&1 || {
+  echo "git is required to tag releases." >&2
+  exit 1
+}
+
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "Working tree must be clean before releasing. Commit or stash changes first." >&2
+  exit 1
+fi
+
+echo "Bumping package version (major)..."
+npm version major --no-git-tag-version >/dev/null
+
+PKG_VERSION="$(node -p "require('./package.json').version")"
+TAG="${TAG:-v${PKG_VERSION}}"
+
+if git rev-parse "$TAG" >/dev/null 2>&1; then
+  echo "Tag $TAG already exists. Delete or set TAG=<new> to override." >&2
+  exit 1
+fi
+
+echo "Building extension bundle..."
+npx web-ext build --overwrite-dest --config ./.web-ext-config.mjs
+
+ARTIFACT="$(ls -t "$ROOT_DIR"/dist/*.{xpi,zip} 2>/dev/null | head -n 1 || true)"
+if [[ -z "$ARTIFACT" ]]; then
+  echo "No build artifact found in dist/." >&2
+  exit 1
+fi
+
+echo "Committing version bump..."
+git add package.json package-lock.json
+git commit -m "Release $TAG"
+
+echo "Creating git tag $TAG..."
+git tag -a "$TAG" -m "Release $TAG"
+
+RELEASE_TITLE="${RELEASE_TITLE:-Persona Builder $TAG}"
+RELEASE_NOTES="${RELEASE_NOTES:-Automated release for $TAG}"
+
+echo "Publishing GitHub release $TAG with artifact $ARTIFACT ..."
+gh release create "$TAG" "$ARTIFACT" --title "$RELEASE_TITLE" --notes "$RELEASE_NOTES"
+
+echo "Done. Remember to push the tag and release if needed: git push origin \"$TAG\""
