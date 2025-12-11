@@ -44,6 +44,7 @@
   },
   "web_accessible_resources": [
     "content.mjs",
+    "options.css",
     "vendor/singlefile/single-file.js"
   ]
 }
