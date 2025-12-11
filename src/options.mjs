@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @import {HistoryRecord} from "./types"
+ * @import {HistoryRecord} from "./@types"
  */
 
 import {
@@ -87,7 +87,7 @@ const tabs = [
 
 const historyProps = {
   getSnapshot: getPageSnapshot,
-  /** @param {import("./types").HistoryRecord} entry */
+  /** @param {import("./@types").HistoryRecord} entry */
   onDeleteHistory: async (entry) => {
     await deleteHistoryEntry(entry.id);
     await renderPersonaAndHistory(entry.personaId);
@@ -186,7 +186,7 @@ async function load() {
 }
 
 /**
- * @param {import("./types").PersonaRecord[]} personas
+ * @param {import("./@types").PersonaRecord[]} personas
  */
 function renderPersonaOptions(personas) {
   if (!personaSelectEl) {
@@ -270,9 +270,9 @@ function setActiveTab(tab) {
 /**
  * Render the persona.json preview for the export tab.
  * @param {string | undefined} personaId
- * @param {import("./types").PersonaRecord | undefined} persona
- * @param {import("./types").HistoryRecord[]} history
- * @param {import("./types").InsightRecord[]} insights
+ * @param {import("./@types").PersonaRecord | undefined} persona
+ * @param {import("./@types").HistoryRecord[]} history
+ * @param {import("./@types").InsightRecord[]} insights
  */
 function renderExportJson(personaId, persona, history, insights) {
   if (!exportJsonEl) {
@@ -422,7 +422,7 @@ async function importPersonaZip(file) {
     renderPersonaOptions(updatedPersonas);
 
     for (const item of history) {
-      /** @type {import("./types").HistoryInput} */
+      /** @type {import("./@types").HistoryInput} */
       const historyInput = {
         personaId: personaRecord.id,
         url: item.entry.url,
@@ -465,7 +465,7 @@ async function importPersonaZip(file) {
 
 /**
  * @param {string} desiredName
- * @param {import("./types").PersonaRecord[]} personas
+ * @param {import("./@types").PersonaRecord[]} personas
  */
 function ensureUniqueName(desiredName, personas) {
   const existingNames = new Set(personas.map((p) => p.name));

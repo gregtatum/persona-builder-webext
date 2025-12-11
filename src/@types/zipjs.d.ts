@@ -1,4 +1,4 @@
-declare module "../vendor/zipjs/index.js" {
+declare module "*vendor/zipjs/index.js" {
   export interface ConfigureOptions {
     useWebWorkers?: boolean;
     maxWorkers?: number;

@@ -107,7 +107,7 @@ async function updateBadge(personaId) {
 /**
  * Request a SingleFile snapshot in the active tab and log the content.
  * @param {number | undefined} tabId
- * @param {import("./types").HistoryRecord} history
+ * @param {import("./@types").HistoryRecord} history
  */
 async function capturePageSnapshot(tabId, history) {
   if (typeof tabId !== "number") {
@@ -137,7 +137,7 @@ async function capturePageSnapshot(tabId, history) {
 
 /**
  * Handle capture requests forwarded from the popup (includes tab and history).
- * @param {{ tabId?: number; history?: import("./types").HistoryRecord }} message
+ * @param {{ tabId?: number; history?: import("./@types").HistoryRecord }} message
  */
 async function handleCaptureSnapshotRequest(message) {
   const { tabId, history } = message;

@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @import {HistoryRecord} from "./types"
+ * @import {HistoryRecord} from "./@types"
  */
 
 /**

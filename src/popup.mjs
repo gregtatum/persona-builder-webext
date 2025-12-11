@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @import {PersonaRecord, HistoryInput} from "./types"
+ * @import {PersonaRecord, HistoryInput} from "./@types"
  */
 
 import { getActivePersonaId, setActivePersonaId } from "./active-persona.mjs";

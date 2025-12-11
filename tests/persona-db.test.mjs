@@ -186,7 +186,7 @@ describe("persona-db", () => {
       IDBKeyRange.only(persona.id)
     );
     const typedSnapshots =
-      /** @type {import("../src/types").PageSnapshotRecord[]} */ (snapshots);
+      /** @type {import("../src/@types").PageSnapshotRecord[]} */ (snapshots);
     expect(typedSnapshots).toHaveLength(1);
     expect(typedSnapshots[0]).toMatchObject({
       historyId: history.id,
@@ -248,7 +248,7 @@ describe("persona-db", () => {
     expect(provided.id).toBe("given-id");
 
     const insights = await readAllFromStore("insights");
-    const typedInsights = /** @type {import("../src/types").InsightRecord[]} */ (
+    const typedInsights = /** @type {import("../src/@types").InsightRecord[]} */ (
       insights
     );
     expect(typedInsights).toHaveLength(2);

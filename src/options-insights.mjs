@@ -49,7 +49,7 @@ export async function renderInsights(personaId, props) {
     return;
   }
 
-  /** @type {import("./types").InsightRecord[]} */
+  /** @type {import("./@types").InsightRecord[]} */
   const insights = await listInsightsForPersona(personaId);
   insightsEmptyEl.hidden = insights.length > 0;
   insights.forEach((insight, index) => {
@@ -176,7 +176,7 @@ async function handleAddInsight(props) {
 
 /**
  * @param {{
- *  insight: import("./types").InsightRecord;
+ *  insight: import("./@types").InsightRecord;
  *  personaId: string;
  *  isPlaceholder: boolean;
  *  props: {
@@ -391,7 +391,7 @@ async function handleInsightSave({
 
 /**
  * @typedef {object} InsightProps
- * @property {(personaId: string) => Promise<import("./types").InsightRecord[]>} listInsightsForPersona
+ * @property {(personaId: string) => Promise<import("./@types").InsightRecord[]>} listInsightsForPersona
  * @property {typeof import("./persona-db.mjs").addInsight} addInsight
  * @property {typeof import("./persona-db.mjs").updateInsight} updateInsight
  * @property {typeof import("./persona-db.mjs").deleteInsight} deleteInsight

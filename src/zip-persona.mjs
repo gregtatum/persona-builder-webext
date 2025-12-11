@@ -8,8 +8,8 @@ import {
   configure as configureZip,
 } from "../vendor/zipjs/index.js";
 
-/** @typedef {import("./types").PersonaRecord} PersonaRecord */
-/** @typedef {import("./types").HistoryRecord} HistoryRecord */
+/** @typedef {import("./@types").PersonaRecord} PersonaRecord */
+/** @typedef {import("./@types").HistoryRecord} HistoryRecord */
 
 /**
  * @param {string} url
@@ -46,7 +46,7 @@ export function sanitizeSegment(value) {
  * Build the persona export payload that lands in persona.json.
  * @param {PersonaRecord} persona
  * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
- * @param {import("./types").InsightRecord[]} [insights]
+ * @param {import("./@types").InsightRecord[]} [insights]
  */
 export function buildPersonaExport(persona, historySnapshots, insights = []) {
   const { id: _omitPersonaId, ...personaWithoutId } = persona;
@@ -70,7 +70,7 @@ export function buildPersonaExport(persona, historySnapshots, insights = []) {
  * Stringify the persona export payload with pretty formatting.
  * @param {PersonaRecord} persona
  * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
- * @param {import("./types").InsightRecord[]} [insights]
+ * @param {import("./@types").InsightRecord[]} [insights]
  */
 export function buildPersonaJson(persona, historySnapshots, insights = []) {
   return JSON.stringify(
@@ -84,7 +84,7 @@ export function buildPersonaJson(persona, historySnapshots, insights = []) {
  * Build a persona zip archive.
  * @param {PersonaRecord} persona
  * @param {Array<{ entry: HistoryRecord; html?: string | null }>} historySnapshots
- * @param {import("./types").InsightRecord[]} [insights]
+ * @param {import("./@types").InsightRecord[]} [insights]
  * @returns {Promise<Blob>}
  */
 export async function buildPersonaZip(persona, historySnapshots, insights = []) {

@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @import {PersonaRecord, HistoryRecord, HistoryInput, PageSnapshotRecord, InsightRecord, InsightInput} from "./types"
+ * @import {PersonaRecord, HistoryRecord, HistoryInput, PageSnapshotRecord, InsightRecord, InsightInput} from "./@types"
  */
 
 const DB_NAME = "personaBuilder";
@@ -147,11 +147,11 @@ export async function listPersonas() {
 export async function updatePersonaName(personaId, name) {
   const tx = await transaction("readwrite", ["personas"]);
   const store = tx.objectStore("personas");
-  const persona = await /** @type {Promise<import("./types").PersonaRecord | undefined>} */ (
+  const persona = await /** @type {Promise<import("./@types").PersonaRecord | undefined>} */ (
     new Promise((resolve, reject) => {
       const req = store.get(personaId);
       req.onerror = () => reject(req.error || new Error("get persona failed"));
-      req.onsuccess = () => resolve(/** @type {import("./types").PersonaRecord | undefined} */ (req.result));
+      req.onsuccess = () => resolve(/** @type {import("./@types").PersonaRecord | undefined} */ (req.result));
     })
   );
   if (!persona) {
@@ -341,18 +341,18 @@ export async function addInsight(personaId, insight) {
 /**
  * Update an insight by id.
  * @param {string} insightId
- * @param {Partial<import("./types").InsightInput>} updates
- * @returns {Promise<import("./types").InsightRecord>}
+ * @param {Partial<import("./@types").InsightInput>} updates
+ * @returns {Promise<import("./@types").InsightRecord>}
  */
 export async function updateInsight(insightId, updates) {
   const tx = await transaction("readwrite", ["insights"]);
   const store = tx.objectStore("insights");
-  const current = await /** @type {Promise<import("./types").InsightRecord | undefined>} */ (
+  const current = await /** @type {Promise<import("./@types").InsightRecord | undefined>} */ (
     new Promise((resolve, reject) => {
       const req = store.get(insightId);
       req.onerror = () => reject(req.error || new Error("get insight failed"));
       req.onsuccess = () =>
-        resolve(/** @type {import("./types").InsightRecord | undefined} */ (req.result));
+        resolve(/** @type {import("./@types").InsightRecord | undefined} */ (req.result));
     })
   );
   if (!current) {
@@ -389,7 +389,7 @@ export async function deleteInsight(insightId) {
 /**
  * List insights for a persona ordered by updated_at descending.
  * @param {string} personaId
- * @returns {Promise<import("./types").InsightRecord[]>}
+ * @returns {Promise<import("./@types").InsightRecord[]>}
  */
 export async function listInsightsForPersona(personaId) {
   const tx = await transaction("readonly", ["insights"]);

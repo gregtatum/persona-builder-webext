@@ -12,7 +12,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true
   },
-  "include": ["**/*.js", "**/*.mjs", "manifest.json"],
+  "include": ["**/*.js", "**/*.mjs", "**/*.d.ts", "manifest.json"],
   "exclude": [
     "node_modules",
     "dist",
