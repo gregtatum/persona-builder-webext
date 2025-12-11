@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Persona Builder",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Stub for capturing HTML snapshots for a Firefox persona YAML.",
   "icons": {
     "48": "assets/icons/person-dark-48.png",
