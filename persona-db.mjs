@@ -382,7 +382,9 @@ export async function listInsightsForPersona(personaId) {
     IDBKeyRange.only(personaId)
   );
   tx.commit?.();
-  return results.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+  return results
+    .filter((insight) => !insight.is_deleted)
+    .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
 }
 
 /**

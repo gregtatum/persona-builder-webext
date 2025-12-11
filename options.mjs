@@ -418,10 +418,19 @@ function buildInsightRow(insight, personaId, isPlaceholder) {
   grid.appendChild(categorySelect);
   grid.appendChild(intentSelect);
   grid.appendChild(scoreSelect);
-  const status = document.createElement("div");
-  status.className = "insight-status";
-  status.textContent = isPlaceholder ? "" : "Saved";
-  grid.appendChild(status);
+  const actions = document.createElement("div");
+  actions.className = "insight-status";
+  if (!isPlaceholder) {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.className = "delete-btn";
+    deleteBtn.addEventListener("click", () => {
+      void handleInsightDelete(personaId, insight.id);
+    });
+    actions.appendChild(deleteBtn);
+  }
+  grid.appendChild(actions);
 
   row.appendChild(grid);
 
@@ -516,6 +525,22 @@ async function handleAddInsight() {
 }
 
 /**
+ * @param {string} personaId
+ * @param {string} insightId
+ */
+async function handleInsightDelete(personaId, insightId) {
+  try {
+    await updateInsight(insightId, {
+      is_deleted: true,
+      updated_at: Date.now(),
+    });
+    await renderInsights(personaId);
+  } catch (error) {
+    log("Failed to delete insight", error);
+  }
+}
+
+/**
  * @param {{
  *  personaId: string;
  *  insightId: string;
@@ -606,7 +631,10 @@ async function handleRenamePersona() {
   try {
     const personaId = await getActivePersonaId();
     if (!personaId) {
-      renderPersonaName("", { disabled: true, placeholder: "No active persona" });
+      renderPersonaName("", {
+        disabled: true,
+        placeholder: "No active persona",
+      });
       return;
     }
 
@@ -618,7 +646,10 @@ async function handleRenamePersona() {
       return;
     }
     if (!newName) {
-      renderPersonaName(current.name, { disabled: false, placeholder: "Persona name" });
+      renderPersonaName(current.name, {
+        disabled: false,
+        placeholder: "Persona name",
+      });
       return;
     }
     if (current.name === newName) {
@@ -631,7 +662,10 @@ async function handleRenamePersona() {
     if (personaSelectEl) {
       personaSelectEl.value = personaId;
     }
-    renderPersonaName(newName, { disabled: false, placeholder: "Persona name" });
+    renderPersonaName(newName, {
+      disabled: false,
+      placeholder: "Persona name",
+    });
     showNotification(`Renamed to ${newName}`);
   } catch (error) {
     log("Failed to rename persona", error);
